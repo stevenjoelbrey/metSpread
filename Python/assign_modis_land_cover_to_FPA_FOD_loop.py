@@ -7,6 +7,8 @@ import pandas as pd
 import sys
 
 
+os.chdir("/Users/sbrey/GoogleDrive/sharedProjects/metSpread/Python")
+
 # List of arguments to be passed from command line.
 if len(sys.argv) == 1:
 	year = 2014
@@ -86,7 +88,7 @@ def get_land_cover_grid():
 
 	# Subset these data, as we only have wildfires in North America. This will
 	# save memory! We only need data in northern hemisphere for sure.
-	x_mask = np.where( (LC_x >= -169.) & (LC_x <= -60.) )[0]
+	x_mask = np.where( (LC_x >= -179.) & (LC_x <= -60.) )[0]
 	y_mask = np.where( (LC_y >= 15.) & (LC_y <= 71.5) )[0]
 
 	LC_x_return = LC_x[x_mask]
@@ -162,7 +164,7 @@ print(FPA_FOD.columns)
 # LOOP through each fire
 ################################################################################
 print("Working on the large for loop")
-for fire_index in range(1000):#range(nFires):
+for fire_index in range(nFires):
 
     if (fire_index%1000==0):
         print str(fire_index*1.0/nFires*100) + " percent complete"
@@ -286,7 +288,7 @@ print("For loop complete. Writing land cover appended dataframe to disk.")
     
 # When the loop is complete, perform sanity checks on the data and append warnings
 # to the file name. 
-if np.max(np.abs(FPA_FOD["dArea"])) > -1e6:
+if np.max(np.abs(FPA_FOD["dArea"])) > -1e-6:
     warnString = "_double_check_max_dArea"
 elif (np.max(FPA_FOD["percent_of_fire_area_overlaped"]) < 99.):
     warnString = "_check_fire_overlap_percentages"
