@@ -35,6 +35,9 @@ if not os.path.isdir(saveDir) :
 	# Save where the code is running 
 	saveDir = os.getcwd()
 
+print("Writing files to:")
+print(saveDir)
+
 # Instance of the server class. 
 server = ECMWFDataServer()
 
@@ -68,6 +71,7 @@ paramDict = {"t2m":["167.128", "an"],  # 2-meter temperature
 
 # Loop through the desired years to download. 
 for year in years:
+	
 	# Replace "YYYY" with the year that is being downloaded 
 	dates = dateBase.replace("YYYY", str(year))
 
@@ -90,7 +94,7 @@ for year in years:
 		    "stream": "mdfa",
 		    "type": "fc", # forecast field
 		    "target": out,
-		    'format':"netcdf"
+		    "format":"netcdf"
 		})
 
 	# Anlysis fields
@@ -107,7 +111,7 @@ for year in years:
 		    "stream": "moda",
 		    "type": "an", # analysis field
 		    "target": out,
-		    'format':"netcdf"
+		    "format":"netcdf"
 		})
 
 
