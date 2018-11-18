@@ -55,6 +55,10 @@ years = np.arange(year1, year2+1)
 for y in years : 
 	f_in = os.path.join(dataDir, 'soil_' + str(y) + '.nc')
 	f_out = os.path.join(dataDir, 'soil_vol_all_layers' + str(y) + '.nc')
+	# TODO: This addition needs to be updated. Not all soil moisture levels 
+	# TODO: are created equal. For example, 0.5 of the total volume for a layer
+	# TODO: 7 cm deep is not the same volume as 0.5 of the total volume for a layer
+	# TODO: that is 1 m deep. Grrrr. 
 	cdo.expr('soil_vol_all_layers=swvl1+swvl2+swvl3+swvl4', input=f_in, output=f_out)
 
 # Those created files need to be converted from units of m**3/m**3 to 
