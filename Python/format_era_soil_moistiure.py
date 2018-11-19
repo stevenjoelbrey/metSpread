@@ -31,6 +31,7 @@
  
 import sys
 import os
+import glob
 import numpy as np
 from netCDF4 import Dataset
 import cdo as cdo
@@ -68,7 +69,7 @@ for y in years :
 	# layer
 	#--------------------------------------------------------------------------
 	print("Making mrso file for %i year soil file" %y)
-	
+
 	nc_file = os.path.join(dataDir, "soil_" + str(y) + ".nc")
 	nc = Dataset(nc_file, "r") 
 	
@@ -91,50 +92,53 @@ for y in years :
 	outputFile = os.path.join(dataDir, "mrso_" + str(y) + ".nc")
 
 	nc_out = Dataset(outputFile, 'w', format='NETCDF4')
-    nc_out.description = 'Soil moisture (water+ice) per unit area'
-    nc_out.location = 'Global'
-    nc_out.createDimension('time',  len(nc.variables["time"]) )
-    nc_out.createDimension('latitude', len(nc.variables["latitude"]) )
-    nc_out.createDimension('longitude', len(nc.variables["longitude"]) )
+	nc_out.description = 'Soil moisture (water+ice) per unit area'
+	nc_out.location = 'Global'
+	nc_out.createDimension('time',  len(nc.variables["time"]) )
+	nc_out.createDimension('latitude', len(nc.variables["latitude"]) )
+	nc_out.createDimension('longitude', len(nc.variables["longitude"]) )
 
 	VAR_ = nc_out.createVariable("mrso", 'f4',('time', 'latitude','longitude'))
-    VAR_.long_name = "Total Soil Moisture Content"
-    VAR_.units = "kg m-2"
+	VAR_.long_name = "Total Soil Moisture Content"
+	VAR_.units = "kg m-2"
 
-    # Create time variable
-    time_ = nc_out.createVariable('time', 'i4', ('time',))
-    time_.units = nc.variables['time'].units
-    time_.calendar = "gregorian"
-    
-    # create lat variable
-    latitude_ = nc_out.createVariable('latitude', 'f4', ('latitude',))
-    latitude_.units = nc.variables['latitude'].units
+	# Create time variable
+	time_ = nc_out.createVariable('time', 'i4', ('time',))
+	time_.units = nc.variables['time'].units
+	time_.calendar = "gregorian"
 
-    # create longitude variable
-    longitude_ = nc_out.createVariable('longitude', 'f4', ('longitude',))
-    longitude_.units = nc.variables['longitude'].units
+	# create lat variable
+	latitude_ = nc_out.createVariable('latitude', 'f4', ('latitude',))
+	latitude_.units = nc.variables['latitude'].units
 
-    # Write the actual data to these dimensions
-    VAR_[:]       = water_kg_per_area
-    time_[:]      = nc.variables["time"][:]
-    latitude_[:]  = nc.variables["latitude"][:]
-    longitude_[:] = nc.variables["longitude"][:]
+	# create longitude variable
+	longitude_ = nc_out.createVariable('longitude', 'f4', ('longitude',))
+	longitude_.units = nc.variables['longitude'].units
 
-    nc_out.close() # File we just wrote
-    nc.close()     # File where the layers were stored separately 
+	# Write the actual data to these dimensions
+	VAR_[:]       = water_kg_per_area
+	time_[:]      = nc.variables["time"][:]
+	latitude_[:]  = nc.variables["latitude"][:]
+	longitude_[:] = nc.variables["longitude"][:]
 
-# 	f_in = os.path.join(dataDir, 'soil_' + str(y) + '.nc')
-# 	f_out = os.path.join(dataDir, 'soil_vol_all_layers' + str(y) + '.nc')
-# 	# TODO: This addition needs to be updated. Not all soil moisture levels 
-# 	# TODO: are created equal. For example, 0.5 of the total volume for a layer
-# 	# TODO: 7 cm deep is not the same volume as 0.5 of the total volume for a layer
-# 	# TODO: that is 1 m deep. Grrrr. 
-# 	cdo.expr('soil_vol_all_layers=swvl1+swvl2+swvl3+swvl4', input=f_in, output=f_out)
+	nc_out.close() # File we just wrote
+	nc.close()     # File where the layers were stored separately 
 
-# # Those created files need to be converted from units of m**3/m**3 to 
-# # kg/m**2
-# for y in years : 
-# 	f_in = os.path.join(dataDir, 'soil_vol_all_layers' + str(y) + '.nc')
-# 	f_out = os.path.join(dataDir, 'mrso' + str(y) + '.nc')
-# 	cdo.expr('mrso=soil_vol_all_layers*2890', input=f_in, output=f_out)
-# 	# TODO: Change units label here and then finally call it mrso 
+
+#------------------------------------------------------------------------------
+# cdo commands for merging yearly nc files and regridding to the common grid
+#------------------------------------------------------------------------------
+# Combine the yearly mrso files that we just wrote into a single merged time
+# file
+print("Combining and regridding files using cdo()")
+
+f_in = glob.glob(os.path.join(dataDir, "mrso_*"))
+f_out = os.path.join(time_merge_out, "mrso_"+str(year1)+"_"+str(year2)+".nc")
+cdo.mergetime(input=" ".join(f_in), output=f_out, options="-b F64")
+
+# Now, create a version of that file that lives on the common grid 
+f_out_common_grid = os.path.join(common_grid_dir, "mrso_"+str(year1)+"_"+str(year2)+".nc")
+cdo.remapbil(common_grid_txt, input=f_out, output=f_out_common_grid, options="-b F64")
+
+print("Script ececuted without error")
+print("Woot woot!")
