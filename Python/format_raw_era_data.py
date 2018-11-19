@@ -6,9 +6,26 @@
 # Format and combine raw monthly means of analysis and forecast fields from 
 # era-interim. 
 # NOTE: This will not include soil moisture, which is more tricky and is handled
-# NOTE: with a script all of its own. 
-# TODO: Comment on the differences required for analysis and forecast fields. 
-
+# NOTE: with a script all of its own (Python/format_era_soil_moisture.py). 
+#
+# The two types of data that are downloaded are "Monthly Means of Daily Means" and "Monthly Means of Daily Forecast Accumulations". 
+#
+# The difference between these data can be found here:
+# http://apps.ecmwf.int/datasets/data/interim-full-moda/levtype=sfc/
+#
+# For forecast fields, they provide the forecast time period sum for a variable, e.g.
+# evaporation (e). That gives monthly means for 00Z and 12Z 12 hour forecasts. To combine
+# the two time periods monthly means use:
+#
+# $ cdo -b F64 monsum e_1984.nc e_monsum_1984.n
+#
+# That combines the 0Z and 12Z forecasts for a month and I have confirmed this 
+# by looking at the raw data.
+#
+# Those yearly monthly total monsum files need to be combined into a single file
+# for the years of interest. That can be done using
+#
+# $ cdo -b F64 mergtime e* e_year1_year2.nc 
 
 import sys
 import os
