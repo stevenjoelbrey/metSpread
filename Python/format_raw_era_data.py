@@ -19,27 +19,31 @@ import cdo as cdo
 # Read command line arguments
 args  = sys.argv
 if len(args) > 1 :
-	var   = str(args[1])
 	year1 = int(args[2])
 	year2 = int(args[3])
 else :
 	year1 = 1983
 	year2 = 2017
 
+# Execute required commands and operations for all years of interest. 
 years = np.arange(year1, year2+1)
+print("Combining data for years", years)
 
 # Directories required for cdo commands and output files 
 dataDir = "/Users/sbrey/GoogleDrive/sharedProjects/metSpreadData/ERA-Interim"
 time_merge_out = "/Users/sbrey/GoogleDrive/sharedProjects/metSpreadData/ERA-Interim/merged_time"
 common_grid_dir = "/Users/sbrey/GoogleDrive/sharedProjects/metSpreadData/ERA-Interim/merged_t_COMMON_GRID"
 common_grid_txt = os.path.join(dataDir,"COMMON_GRID.txt")
+
 # Gives access to CDO commands 
 cdo = cdo.Cdo()
 
-forecast_vars = ['e', 'tp', 'slhf']
+# Variables to combine data for
 analysis_vars = ['t2m', 'si10', 'd2m']
+forecast_vars = ['e', 'tp', 'slhf']
 
-# Combine yearly files for forecast fields, as there is nothing to do with different
+print("Handling the analysis fields.", analysis_vars)
+# Combine yearly files for analysis fields, as there is nothing to do with different
 # forecast accumulation periods for individual months within the yearly files. 
 for an_var in analysis_vars :
 
@@ -54,4 +58,27 @@ for an_var in analysis_vars :
 	cdo.remapbil(common_grid_txt, input=f_in_common, output=f_out_common, options="-b F64")
 
 
-# TODO: Make common grid version of merged_time files 
+print("Handling the forecasted fields.", forecast_vars)
+# Combine yearly files for forecast fields, forecast accumulation periods for individual 
+# months within the yearly files. 
+for fc_var in forecast_vars :
+
+	for y in years :
+		# Combine month 0Z and 12Z forecast accumulation periods
+		f_in = os.path.join(dataDir, fc_var + "_" + str(y) + ".nc")
+		f_out = os.path.join(dataDir, fc_var + "_merged_0Z12Z_" + str(y) + ".nc")
+		cdo.monsum(input=f_in, output=f_out, options="-b F64")
+
+	# Merge the yearly files into a single combined file
+	f_combine_list = glob.glob(os.path.join(dataDir, fc_var +  "_merged_0Z12Z_*"))
+	f_out_combine = os.path.join(time_merge_out, fc_var+"_"+str(year1)+"_"+str(year2)+".nc")
+	cdo.mergetime(input=" ".join(f_combine_list), output=f_out_combine, options="-b F64")
+
+	# Now, regrid this merged file to the common grid 
+	f_out_common_grid = os.path.join(common_grid_dir, fc_var+"_"+str(year1)+"_"+str(year2)+".nc")
+	cdo.remapbil(common_grid_txt, input=f_out_combine, output=f_out_common_grid, options="-b F64")
+
+
+print("Script ececuted without error")
+print("Woot woot!")
+
