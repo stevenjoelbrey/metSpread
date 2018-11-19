@@ -4,67 +4,137 @@
 # Description
 #------------------------------------------------------------------------------
 # The purpose of this script is to combine era-interim soil layers 1-4 
-# into a single total volume of soil moisture. layer 1 from 0cm to 7cm, layer 
-# 2 from 7cm to 28cm, layer 3 from 28cm to 1m and layer 4 from 1m to 2.89m. 
+# into a variable the describes the total mass of water per square meter of soil. 
 # The yearly soil files were downloaded with get_ecmwf.py. They are labeled 
 # soil_YYYY.nc. They contain four soil layers, swvl1, swvl2, swvl3, swvl4. We 
 # want to combine these layers because CMIP5 tracks soil moisture in all layers (mrso).
 # ERA soil units are m**3/m**3, this needs to be converted to kg/m**2 in order
-# to match th units of CMIP5 soil moisture. The sketch below is to aid this 
-# unit conversion.  
+# to match th units of CMIP5 soil moisture. The sketch below is to aid the 
+# unit conversion performed by this script.  
 #
-#    *-------*
-#   /|      /|
-#  / |     / |
-# *--|----*  |
-# |  *----|--*
-# | /     | /
-# *-------*
+#    ({ }  Atmosphere ({ })
+#        1m  
+#     *-------*   	    Z0 = 0.0 m 
+# 1m /|      /|   	    Z1 = 0.00 - 0.07 m 
+#   / |     / | 2.89m  	Z2 = 0.07 - 0.28 m
+#  *--|----*  |   	    Z3 = 0.28 - 1.00 m 
+#  |  *----|--*   	    Z4 = 1.00 - 2.89 m 
+#  | /     | /      
+#  *-------*      
 #
 # ERA gives us the fraction of a volume of soil of depth Z that is water in some
-# phase. The depth of this volume is 2.89 m, and the unit area of interest is 1 m**2. 
-# The total volume of this volume is 2.89 m * 1 m**2 = 2.89 m**3. ERA tells us what 
-# fraction is water. total_water_vol = 2.89 m**3 * frac. To get the mass in this cube
-# multiply by the density of liquid water, which will have some error, since some of
-# this volume could be ice. 
-# total_water_mass_per_area = water_vol_frac * 1000 kg/m**3 * 2.89 m = kg/m**2 
-
-
+# phase (liquid or ice). The depth of this volume is 2.89 m, and the unit area of 
+# interest is 1 m**2. 
+# The total volume of this volume is 2.89 m * 1 m**2 = 2.89 m**3. To get the mass 
+# in this cube multiply by the density of liquid water, which will have some error, 
+# since some of (but not a known amount) this volume could be ice. 
+ 
 import sys
 import os
 import numpy as np
+from netCDF4 import Dataset
 import cdo as cdo
 
 # Read command line arguments
 args  = sys.argv
 if len(args) > 1 :
-	var   = str(args[1])
 	year1 = int(args[2])
 	year2 = int(args[3])
 else :
 	year1 = 1983
 	year2 = 2017
 
-
+# The soil moisture data live here: 
 dataDir = "/Users/sbrey/GoogleDrive/sharedProjects/metSpreadData/ERA-Interim"
+time_merge_out = "/Users/sbrey/GoogleDrive/sharedProjects/metSpreadData/ERA-Interim/merged_time"
+common_grid_dir = "/Users/sbrey/GoogleDrive/sharedProjects/metSpreadData/ERA-Interim/merged_t_COMMON_GRID"
+common_grid_txt = os.path.join(dataDir,"COMMON_GRID.txt")
 
+# For access to handy $ cdo commands via python  
 cdo = cdo.Cdo()
 
+# Handle all years 
 years = np.arange(year1, year2+1)
 
-for y in years : 
-	f_in = os.path.join(dataDir, 'soil_' + str(y) + '.nc')
-	f_out = os.path.join(dataDir, 'soil_vol_all_layers' + str(y) + '.nc')
-	# TODO: This addition needs to be updated. Not all soil moisture levels 
-	# TODO: are created equal. For example, 0.5 of the total volume for a layer
-	# TODO: 7 cm deep is not the same volume as 0.5 of the total volume for a layer
-	# TODO: that is 1 m deep. Grrrr. 
-	cdo.expr('soil_vol_all_layers=swvl1+swvl2+swvl3+swvl4', input=f_in, output=f_out)
+# from 1st to 4th (meters)
+layer_depths = [0.07, 0.21, 0.72, 1.89]
+print("Total depth of soil layers %f" % np.sum(layer_depths) )
 
-# Those created files need to be converted from units of m**3/m**3 to 
-# kg/m**2
+# Make each soil_YYYY.nc file into a mrso like file 
 for y in years : 
-	f_in = os.path.join(dataDir, 'soil_vol_all_layers' + str(y) + '.nc')
-	f_out = os.path.join(dataDir, 'mrso' + str(y) + '.nc')
-	cdo.expr('mrso=soil_vol_all_layers*2890', input=f_in, output=f_out)
-	# TODO: Change units label here and then finally call it mrso 
+
+	#--------------------------------------------------------------------------
+	# Open the nc file, scale each layers volume of water by the depth of that
+	# layer
+	#--------------------------------------------------------------------------
+	print("Making mrso file for %i year soil file" %y)
+	
+	nc_file = os.path.join(dataDir, "soil_" + str(y) + ".nc")
+	nc = Dataset(nc_file, "r") 
+	
+	# Get nc attributes to pass along to a new file written here. 
+
+	# Scale volume by the depth of the layer. This gives the data a dimension of
+	# depth
+	swvl1 = nc.variables['swvl1'][:] * layer_depths[0]
+	swvl2 = nc.variables['swvl2'][:] * layer_depths[1]
+	swvl3 = nc.variables['swvl3'][:] * layer_depths[2]
+	swvl4 = nc.variables['swvl4'][:] * layer_depths[3]
+
+	# new variable, that is the sum of the total volume depths of water
+	total_water_volume = swvl1 + swvl2 + swvl3 + swvl4 # (m water)
+	water_kg_per_area = total_water_volume * 1000. # (m water) * (1000 kg/m**3) = (kg/m**2)
+
+	#--------------------------------------------------------------------------
+	# Write this as a new nc file
+	#--------------------------------------------------------------------------
+	outputFile = os.path.join(dataDir, "mrso_" + str(y) + ".nc")
+
+	nc_out = Dataset(outputFile, 'w', format='NETCDF4')
+    nc_out.description = 'Soil moisture (water+ice) per unit area'
+    nc_out.location = 'Global'
+    nc_out.createDimension('time',  len(nc.variables["time"]) )
+    nc_out.createDimension('latitude', len(nc.variables["latitude"]) )
+    nc_out.createDimension('longitude', len(nc.variables["longitude"]) )
+
+	VAR_ = nc_out.createVariable("mrso", 'f4',('time', 'latitude','longitude'))
+    VAR_.long_name = "Total Soil Moisture Content"
+    VAR_.units = "kg m-2"
+
+    # Create time variable
+    time_ = nc_out.createVariable('time', 'i4', ('time',))
+    time_.units = nc.variables['time'].units
+    time_.calendar = "gregorian"
+    
+    # create lat variable
+    latitude_ = nc_out.createVariable('latitude', 'f4', ('latitude',))
+    latitude_.units = nc.variables['latitude'].units
+
+    # create longitude variable
+    longitude_ = nc_out.createVariable('longitude', 'f4', ('longitude',))
+    longitude_.units = nc.variables['longitude'].units
+
+    # Write the actual data to these dimensions
+    VAR_[:]       = water_kg_per_area
+    time_[:]      = nc.variables["time"][:]
+    latitude_[:]  = nc.variables["latitude"][:]
+    longitude_[:] = nc.variables["longitude"][:]
+
+    nc_out.close() # File we just wrote
+    nc.close()     # File where the layers were stored separately 
+
+# 	f_in = os.path.join(dataDir, 'soil_' + str(y) + '.nc')
+# 	f_out = os.path.join(dataDir, 'soil_vol_all_layers' + str(y) + '.nc')
+# 	# TODO: This addition needs to be updated. Not all soil moisture levels 
+# 	# TODO: are created equal. For example, 0.5 of the total volume for a layer
+# 	# TODO: 7 cm deep is not the same volume as 0.5 of the total volume for a layer
+# 	# TODO: that is 1 m deep. Grrrr. 
+# 	cdo.expr('soil_vol_all_layers=swvl1+swvl2+swvl3+swvl4', input=f_in, output=f_out)
+
+# # Those created files need to be converted from units of m**3/m**3 to 
+# # kg/m**2
+# for y in years : 
+# 	f_in = os.path.join(dataDir, 'soil_vol_all_layers' + str(y) + '.nc')
+# 	f_out = os.path.join(dataDir, 'mrso' + str(y) + '.nc')
+# 	cdo.expr('mrso=soil_vol_all_layers*2890', input=f_in, output=f_out)
+# 	# TODO: Change units label here and then finally call it mrso 
