@@ -25,21 +25,15 @@ import numpy as np
 import cdo as cdo
 import shutil
 
-
-
 cdo = cdo.Cdo()
 
 
-# Read command line arguments
-args  = sys.argv
-if len(args) > 1 :
-	var = args[1]
-else :
-	var = 'tas'
 
 # Directories to read and write from 
 raw_data_dir = "/Users/sbrey/GoogleDrive/sharedProjects/metSpreadData/getCMIP5/r1i1p1_raw_downloaded_files/"
 merged_time_dir = "/Users/sbrey/GoogleDrive/sharedProjects/metSpreadData/getCMIP5/r1i1p1_merged_time/"
+cut_time_dir = "/Users/sbrey/GoogleDrive/sharedProjects/metSpreadData/getCMIP5/r1i1p1_merged_time_cut/"
+
 
 # Other variables for building file names 
 ensemble = 'r1i1p1'
@@ -101,7 +95,7 @@ def	make_var_files(var, scenario, raw_data_dir) :
 	return
 	------
 		None, desired output are written as netCDF files. 
-		
+
 	"""
 
 	# Get the names of the models available for this query
@@ -137,11 +131,22 @@ def	make_var_files(var, scenario, raw_data_dir) :
 
 			cdo.mergetime(input=files_to_merge, output=f_out, options="-b F64")
 
+		# Cut the newly merged files to the dates of interest only
+		if int(maxDate) < int(200512) :
+			print("ERROR- model last date not late enough")
+			print("WRONG DATES for " + s)
+			print(maxDate)
+
+		f_seldate = s.replace('*','') + '_198301_200512.nc'
+		f_seldate_out = os.path.join(cut_time_dir, f_seldate) 
+		#print(f_seldate_out)
+		cdo.seldate('1983-01-01,2005-12-31', input=f_out, output=f_seldate_out, options="-b F64")
+		
+
 #------------------------------------------------------------------------------
 # For a given var, and scenario, cary out tasks 1-3 for all models 
 #------------------------------------------------------------------------------
-var = 'tas'
-scenario = 'historical'
+# make_var_files('tas', 'historical', raw_data_dir)
 
 
 
