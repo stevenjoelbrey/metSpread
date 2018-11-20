@@ -18,7 +18,7 @@
 # 2) seldate : for the merged time files. Subset to dates of interest, 198301-210012
 # 3) remapbil : for the 198301-210012 merged and cut files, regrid to a common grid 
 
-makeHistory = True
+makeHistory = False
 
 import sys
 import os
@@ -59,7 +59,7 @@ def get_var_unique_models(var, scenario, raw_data_dir) :
 	"""
 
 	# Get unique model names based on the available data for this variable
-	all_files = glob.glob(os.path.join(raw_data_dir, var+"*"))
+	all_files = glob.glob(os.path.join(raw_data_dir, var + "_*"))
 	# Make into single string
 	all_files_string = " ".join(all_files)
 	# remove annoyung raw_data_dir, and seperate files
@@ -115,6 +115,11 @@ def	make_var_files(var, scenario, raw_data_dir) :
 		s = var + time_span + model + '_' + scenario + '_' + ensemble + "*"
 		l = glob.glob(os.path.join(raw_data_dir, s))
 
+		if len(l) == 0 :
+			print("No files found for inquery related to:")
+			print(s)
+			print(l)
+
 		# Write the name of the merged file, this will be a combo of s and
 		# the span of the dates for the detected files 
 		minDate = l[0][-16:-10] # All nc files end with dates spanned. Can be indexed
@@ -139,6 +144,7 @@ def	make_var_files(var, scenario, raw_data_dir) :
 			cdo.mergetime(input=files_to_merge, output=f_out, options="-b F64")
 
 		# Cut the newly merged files to the dates of interest only
+		# Historical ----------------------------------------------------------
 		if scenario == 'historical' : 
 			# Handle the desired cut dates for historical files as well as special
 			# errors messages relevant to these cutoffs
@@ -177,8 +183,45 @@ def	make_var_files(var, scenario, raw_data_dir) :
 				print(s)
 				print("------------------------------------------------------------------")
 
-		# TODO: RCP 8.5 statements
-		# TODO: RCP 4.5 statements  
+		# RCP 8.5 & 8.5 statements --------------------------------------------
+		if scenario != "historical" :
+
+			cut_time_dir = os.path.join(base_dir, "r1i1p1_rcp_cut/")
+
+			if int(maxDate) < int(210012) :
+				print("------------------------------------------------------------------")
+				print("ERROR- model last date not late enough")
+				print("WRONG DATES for " + s)
+				print("The max date in the file was " + maxDate)
+				print("This file requires a manual addition of first month of an RCP file")
+				print("------------------------------------------------------------------")
+
+			if int(minDate) > int(200601) :
+				print("------------------------------------------------------------------")
+				print("ERROR- model file data do not have earlier enough start date")
+				print("WRONG DATES for " + s)
+				print("The min date in the file was " + minDate)
+				print("This file requires getting more historical data for this variable")
+				print("------------------------------------------------------------------")
+
+			f_seldate = s.replace('*','') + '_200601_210012.nc'
+			f_seldate_out = os.path.join(cut_time_dir, f_seldate) 
+			cdo.seldate('2006-01-01,2100-12-31', input=f_out, output=f_seldate_out, options="-b F64")		 
+
+			# Check for the length of this cut historical file written above.
+			# 2006 - 2100 is 95 years, times 12 months per year, the time dimension
+			# of the cut files should be length 1140
+			nc = Dataset(f_seldate_out, 'r')
+			t = nc.variables['time'][:]
+			nc.close()
+			if len(t) != 1140 :
+				print("----------------------------------------------------------------------")
+				print("ERROR- merged and cut date file does not have correct number of months")
+				print("The correct number of months should be 1140, got %i " % len(t) )
+				print(len(np.unique(t)))
+				print(s)
+				print("----------------------------------------------------------------------")
+
 
 #------------------------------------------------------------------------------
 # For a given var, and scenario, cary out tasks 1-3 for all models 
@@ -191,7 +234,7 @@ if makeHistory == True :
 	make_var_files('pr', 'historical', raw_data_dir);      print("pr complete")
 	make_var_files('hurs', 'historical', raw_data_dir);    print("hurs complete")
 	make_var_files('hfls', 'historical', raw_data_dir);    print("hfls complete")
-
+	make_var_files('evspsbl', 'historical', raw_data_dir); print("evspsbl complete")
 
 
 
