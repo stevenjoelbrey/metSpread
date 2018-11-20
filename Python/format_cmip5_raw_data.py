@@ -219,8 +219,16 @@ def	make_var_files(var, scenario, raw_data_dir) :
 				print("ERROR- merged and cut date file does not have correct number of months")
 				print("The correct number of months should be 1140, got %i " % len(t) )
 				print(len(np.unique(t)))
-				print(s)
+				print(f_seldate_out)
+				print("The file will be deleted. It is too dangerous to be left alive.")
 				print("----------------------------------------------------------------------")
+				# If the file is not corret, delete it! 
+				os.remove(f_seldate_out)
+
+
+# TODO: Pairing history with RCP files. 
+# TODO: Regridding these merged files to the common grid for the ultimate final out! 
+
 
 
 #------------------------------------------------------------------------------
