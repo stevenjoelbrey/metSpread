@@ -18,15 +18,17 @@
 # 2) seldate : for the merged time files. Subset to dates of interest, 198301-210012
 # 3) remapbil : for the 198301-210012 merged and cut files, regrid to a common grid 
 
+makeHistory = True
+
 import sys
 import os
 import glob
 import numpy as np
 import cdo as cdo
 import shutil
+from netCDF4 import Dataset
 
 cdo = cdo.Cdo()
-
 
 
 # Directories to read and write from 
@@ -161,17 +163,35 @@ def	make_var_files(var, scenario, raw_data_dir) :
 
 			f_seldate = s.replace('*','') + '_198301_200512.nc'
 			f_seldate_out = os.path.join(cut_time_dir, f_seldate) 
-			#print(f_seldate_out)
 			cdo.seldate('1983-01-01,2005-12-31', input=f_out, output=f_seldate_out, options="-b F64")
 
-			# TODO:   Check for the length of this cut historical file written above
-		
+			# Check for the length of this cut historical file written above.
+			# 1983 - 2005 is 23 years, times 12 months per year, the time dimension
+			# of the cut files should be length 276
+			nc = Dataset(f_seldate_out, 'r')
+			t = nc.variables['time'][:]
+			nc.close()
+			if len(t) != 276 :
+				print("------------------------------------------------------------------")
+				print("ERROR- merged and cut date file does not have correct # of months")
+				print("The correct number of months should be 276, got %i " % len(t) )
+				print(s)
+				print("------------------------------------------------------------------")
+
+		# TODO: RCP 8.5 statements
+		# TODO: RCP 4.5 statements  
 
 #------------------------------------------------------------------------------
 # For a given var, and scenario, cary out tasks 1-3 for all models 
 #------------------------------------------------------------------------------
-# make_var_files('tas', 'historical', raw_data_dir)
+if makeHistory == True :
+	make_var_files('sfcWind', 'historical', raw_data_dir); print("sfcWind complete")
+	make_var_files('tas', 'historical', raw_data_dir); print("tas complete")
+	make_var_files('mrso', 'historical', raw_data_dir); print("mrso complete")
+	make_var_files('huss', 'historical', raw_data_dir); print("huss complete")
+	make_var_files('pr', 'historical', raw_data_dir); print("pr complete")
+	make_var_files('hurs', 'historical', raw_data_dir); print("hurs complete")
+	make_var_files('hfls', 'historical', raw_data_dir); print("hfls complete")
 
-
-
-
+print("Script executed without fail")
+print("yay")
