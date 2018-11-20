@@ -110,8 +110,8 @@ def	make_var_files(var, scenario, raw_data_dir) :
 
 		# Write the name of the merged file, this will be a combo of s and
 		# the span of the dates for the detected files 
-		minDate = l[0][-16:-10] 
-		maxDate = l[-1][-9:-3]
+		minDate = l[0][-16:-10] # All nc files end with dates spanned. Can be indexed
+		maxDate = l[-1][-9:-3]  # from the end of the charactor string. 
 		f_merged_time_out = s.replace('*','') + '_' + minDate + '-' + maxDate + '.nc'
 
 		if len(l) == 1 :
@@ -132,15 +132,31 @@ def	make_var_files(var, scenario, raw_data_dir) :
 			cdo.mergetime(input=files_to_merge, output=f_out, options="-b F64")
 
 		# Cut the newly merged files to the dates of interest only
-		if int(maxDate) < int(200512) :
-			print("ERROR- model last date not late enough")
-			print("WRONG DATES for " + s)
-			print(maxDate)
+		if scenario == 'historical' : 
+			# Handle the desired cut dates for historical files as well as special
+			# errors messages relevant to these cutoffs
+			if int(maxDate) < int(200512) :
+				print("------------------------------------------------------------------")
+				print("ERROR- model last date not late enough")
+				print("WRONG DATES for " + s)
+				print("The max date in the file was " + maxDate)
+				print("This file requires a manual addition of first month of an RCP file")
+				print("------------------------------------------------------------------")
 
-		f_seldate = s.replace('*','') + '_198301_200512.nc'
-		f_seldate_out = os.path.join(cut_time_dir, f_seldate) 
-		#print(f_seldate_out)
-		cdo.seldate('1983-01-01,2005-12-31', input=f_out, output=f_seldate_out, options="-b F64")
+			if int(minDate) > int(198301) :
+				print("------------------------------------------------------------------")
+				print("ERROR- model file data do not have earlier enough start date")
+				print("WRONG DATES for " + s)
+				print("The min date in the file was " + minDate)
+				print("This file requires getting more historical data for this variable")
+				print("------------------------------------------------------------------")
+
+			f_seldate = s.replace('*','') + '_198301_200512.nc'
+			f_seldate_out = os.path.join(cut_time_dir, f_seldate) 
+			#print(f_seldate_out)
+			cdo.seldate('1983-01-01,2005-12-31', input=f_out, output=f_seldate_out, options="-b F64")
+
+			# TODO:   Check for the length of this cut historical file written above
 		
 
 #------------------------------------------------------------------------------
