@@ -86,43 +86,62 @@ def get_var_unique_models(var, scenario, raw_data_dir) :
 	return unique_var_model_names
 
 
+def	make_var_files(var, scenario, raw_data_dir) : 
+	"""
+	Merges individual files for a given variable, and scenario, for all models
+	that have output for those. 
+
+	Parameters
+	----------
+		var : str, the variable to list files for
+		scenario : str, the scenario to list for a given var
+		raw_data_dir : str, the directory where these queries will be
+		               made
+
+	return
+	------
+		None, desired output are written as netCDF files. 
+		
+	"""
+
+	# Get the names of the models available for this query
+	var_available_models = get_var_unique_models(var, scenario, raw_data_dir)
+	
+	# loop through these models, merging and moving files as needed 
+	for model in var_available_models :
+
+		# variable_Amon_ModelName_scenario_ensembleMember_YYYYMM-YYYYMM.nc
+		s = var + '_Amon_' + model + '_' + scenario + '_' + ensemble + "*"
+		l = glob.glob(os.path.join(raw_data_dir, s))
+
+		# Write the name of the merged file, this will be a combo of s and
+		# the span of the dates for the detected files 
+		minDate = l[0][-16:-10] 
+		maxDate = l[-1][-9:-3]
+		f_merged_time_out = s.replace('*','') + '_' + minDate + '-' + maxDate + '.nc'
+
+		if len(l) == 1 :
+			# To time merge required, the dates are represented by a single
+			# file. Copy this file and place in desired merged_time directory 
+			f_in = os.path.join(raw_data_dir, f_merged_time_out)
+			f_out = os.path.join(merged_time_dir, f_merged_time_out)
+			# do the copying 
+			shutil.copy(f_in, f_out)
+
+		else : 
+			# Make a single string of files to merge, to pass to cdo command 
+			files_to_merge = " ".join(l)
+
+			# Make merged file name based on span of dates 
+			f_out = os.path.join(merged_time_dir, f_merged_time_out)
+
+			cdo.mergetime(input=files_to_merge, output=f_out, options="-b F64")
+
 #------------------------------------------------------------------------------
 # For a given var, and scenario, cary out tasks 1-3 for all models 
 #------------------------------------------------------------------------------
 var = 'tas'
 scenario = 'historical'
-var_available_models = get_var_unique_models(var, scenario, raw_data_dir)
-
-for model in var_available_models :
-
-	# variable_Amon_ModelName_scenario_ensembleMember_YYYYMM-YYYYMM.nc
-	s = var + '_Amon_' + model + '_' + scenario + '_' + ensemble + "*"
-	l = glob.glob(os.path.join(raw_data_dir, s))
-
-	# Write the name of the merged file, this will be a combo of s and
-	# the span of the dates for the detected files 
-	minDate = l[0][-16:-10] 
-	maxDate = l[-1][-9:-3]
-	f_merged_time_out = s.replace('*','') + '_' + minDate + '-' + maxDate + '.nc'
-
-	if len(l) == 1 :
-		# To time merge required, the dates are represented by a single
-		# file. Copy this file and place in desired merged_time directory 
-		f_in = os.path.join(raw_data_dir, f_merged_time_out)
-		f_out = os.path.join(merged_time_dir, f_merged_time_out)
-		# do the copying 
-		shutil.copy(f_in, f_out)
-
-	else : 
-		# Make a single string of files to merge, to pass to cdo command 
-		files_to_merge = " ".join(l)
-
-		# Make merged file name based on span of dates 
-		f_out = os.path.join(merged_time_dir, f_merged_time_out)
-
-		cdo.mergetime(input=files_to_merge, output=f_out, options="-b F64")
-
-
 
 
 
