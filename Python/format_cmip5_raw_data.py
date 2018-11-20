@@ -104,8 +104,16 @@ def	make_var_files(var, scenario, raw_data_dir) :
 	# loop through these models, merging and moving files as needed 
 	for model in var_available_models :
 
-		# variable_Amon_ModelName_scenario_ensembleMember_YYYYMM-YYYYMM.nc
-		s = var + '_Amon_' + model + '_' + scenario + '_' + ensemble + "*"
+		# e.g. variable_Amon_ModelName_scenario_ensembleMember_YYYYMM-YYYYMM.nc
+		if var == "mrso" : 
+			# Land parameter
+			time_span = '_Lmon_'
+		else :
+			# atmosphere parameter
+			time_span = '_Amon_'
+
+		# Create a string that will list disired files
+		s = var + time_span + model + '_' + scenario + '_' + ensemble + "*"
 		l = glob.glob(os.path.join(raw_data_dir, s))
 
 		# Write the name of the merged file, this will be a combo of s and
