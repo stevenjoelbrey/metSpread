@@ -30,17 +30,14 @@ from netCDF4 import Dataset
 
 cdo = cdo.Cdo()
 
-
 # Directories to read and write from 
-raw_data_dir = "/Users/sbrey/GoogleDrive/sharedProjects/metSpreadData/getCMIP5/r1i1p1_raw_downloaded_files/"
-merged_time_dir = "/Users/sbrey/GoogleDrive/sharedProjects/metSpreadData/getCMIP5/r1i1p1_merged_time/"
-cut_time_dir = "/Users/sbrey/GoogleDrive/sharedProjects/metSpreadData/getCMIP5/r1i1p1_merged_time_cut/"
-
+base_dir = "/Users/sbrey/GoogleDrive/sharedProjects/metSpreadData/getCMIP5"
+raw_data_dir = os.path.join(base_dir, "r1i1p1_raw_downloaded_files/")
+merged_time_dir = os.path.join(base_dir, "r1i1p1_merged_time/")
 
 # Other variables for building file names 
 ensemble = 'r1i1p1'
 scenarios = ['historical', 'rcp45', 'rcp85']
-
 
 def get_var_unique_models(var, scenario, raw_data_dir) :
 	"""
@@ -145,6 +142,8 @@ def	make_var_files(var, scenario, raw_data_dir) :
 		if scenario == 'historical' : 
 			# Handle the desired cut dates for historical files as well as special
 			# errors messages relevant to these cutoffs
+			cut_time_dir = os.path.join(base_dir, "r1i1p1_history_cut/")
+
 			if int(maxDate) < int(200512) :
 				print("------------------------------------------------------------------")
 				print("ERROR- model last date not late enough")
@@ -186,12 +185,17 @@ def	make_var_files(var, scenario, raw_data_dir) :
 #------------------------------------------------------------------------------
 if makeHistory == True :
 	make_var_files('sfcWind', 'historical', raw_data_dir); print("sfcWind complete")
-	make_var_files('tas', 'historical', raw_data_dir); print("tas complete")
-	make_var_files('mrso', 'historical', raw_data_dir); print("mrso complete")
-	make_var_files('huss', 'historical', raw_data_dir); print("huss complete")
-	make_var_files('pr', 'historical', raw_data_dir); print("pr complete")
-	make_var_files('hurs', 'historical', raw_data_dir); print("hurs complete")
-	make_var_files('hfls', 'historical', raw_data_dir); print("hfls complete")
+	make_var_files('tas', 'historical', raw_data_dir);     print("tas complete")
+	make_var_files('mrso', 'historical', raw_data_dir);    print("mrso complete")
+	make_var_files('huss', 'historical', raw_data_dir);    print("huss complete")
+	make_var_files('pr', 'historical', raw_data_dir);      print("pr complete")
+	make_var_files('hurs', 'historical', raw_data_dir);    print("hurs complete")
+	make_var_files('hfls', 'historical', raw_data_dir);    print("hfls complete")
 
+
+
+
+print("------------------------------------------------------------------")
 print("Script executed without fail")
 print("yay")
+print("------------------------------------------------------------------")
