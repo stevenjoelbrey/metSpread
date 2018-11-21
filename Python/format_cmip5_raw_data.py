@@ -19,7 +19,8 @@
 # 3) remapbil : for the 198301-210012 merged and cut files, regrid to a common grid 
 
 makeHistory = False
-MakeNew = True
+makeNew = False
+makePairs = False
 
 import sys
 import os
@@ -35,10 +36,10 @@ cdo = cdo.Cdo()
 base_dir = "/Users/sbrey/GoogleDrive/sharedProjects/metSpreadData/getCMIP5"
 raw_data_dir = os.path.join(base_dir, "r1i1p1_raw_downloaded_files/")
 merged_time_dir = os.path.join(base_dir, "r1i1p1_merged_time/")
+common_grid_file = os.path.join(base_dir, 'COMMON_GRID.txt')
 
 # Other variables for building file names 
 ensemble = 'r1i1p1'
-scenarios = ['historical', 'rcp45', 'rcp85']
 
 def get_var_unique_models(var, scenario, raw_data_dir) :
 	"""
@@ -280,20 +281,42 @@ def pair_history_to_rcp(var, rcp, ensemble='r1i1p1') :
 			# Hold onto RCP name, since that is what matters past 2005
 			merged_name = var + time_span + model + '_' + rcp + '_' + ensemble + "_198301-210012.nc"
 			history_rcp_out = os.path.join( base_dir, 'r1i1p1_history_rcp_merged', merged_name)
+			
 			# Make files to merge a string that cdo likes 
 			files_to_merge = history_file_path + ' ' + rcp_file_path
-
 			cdo.mergetime(input=files_to_merge, output=history_rcp_out, options="-b F64")
 
-			# TODO: Regrid this merged file to the common grid 
+			# Test for correct number of months in the merged file
+			# 1983-2100 is 118 years times 12 months = 1416
+			nc = Dataset(history_rcp_out, 'r')
+			t = nc.variables['time'][:]
+			nc.close()
+			# Remove and warn when the file is not the correct length. 
+			if len(t) != 1416 :
+
+				print("----------------------------------------------------------------------")
+				print("ERROR- merged and cut date file does not have correct number of months")
+				print(history_rcp_out)
+				print("The correct number of months should be 1416, got %i " % len(t) )
+				print("It has %i unique dates" %len(np.unique(t)))
+				print("The file will be deleted. It is too dangerous to be left alive.")
+				print("----------------------------------------------------------------------")
+				os.remove(history_rcp_out)
+
+			else :
+				# Regrid this merged file to the common grid 
+				f_out_common = os.path.join(base_dir, 'r1i1p1_rcp_COMMON_GRID', merged_name)
+				cdo.remapbil(common_grid_file, input=history_rcp_out, output=f_out_common, options="-b F64")
+
 
 		else :
+
 			print('------------------------------------------------------------')
+			print("The history file " + history_file + ' had no ' + rcp + ' pair.')
 			print('Not available: ' + rcp_file)
 			print('In ' + rcp_dir)
 			print('------------------------------------------------------------')
 
-		# Test for correct number of months in the merged file
 
 
 #------------------------------------------------------------------------------
@@ -309,8 +332,9 @@ if makeHistory == True :
 	make_var_files('hfls', 'historical', raw_data_dir);    print("hfls complete")
 	make_var_files('evspsbl', 'historical', raw_data_dir); print("evspsbl complete")
 
-if MakeNew == True : 
-
+if makeNew == True : 
+	# Related to the newly downloaded data, when the project rebooted in concept
+	# near the beginning of Nov 2018
 	make_var_files('mrso', 'rcp45', raw_data_dir);    print("mrso 45 complete")
 	make_var_files('huss', 'rcp45', raw_data_dir);    print("huss 45 complete")
 	make_var_files('evspsbl', 'rcp45', raw_data_dir); print("evspsbl 45 complete")
@@ -318,6 +342,19 @@ if MakeNew == True :
 	make_var_files('mrso', 'rcp85', raw_data_dir);    print("mrso 85 complete")
 	make_var_files('huss', 'rcp85', raw_data_dir);    print("huss 85 complete")
 	make_var_files('evspsbl', 'rcp85', raw_data_dir); print("evspsbl 85 complete")
+
+if makePairs == True : 
+	#pair_history_to_rcp('tas', 'rcp85', ensemble='r1i1p1')
+	for r in ['rcp85', 'rcp45'] :
+		print("Working on pairing history to " + r)
+		pair_history_to_rcp('tas', r);     print("completed tas")
+		pair_history_to_rcp('sfcWind', r); print('completed sfcWind')
+		pair_history_to_rcp('mrso', r);    print('completed mrso')
+		pair_history_to_rcp('huss', r);    print('completed huss')
+		pair_history_to_rcp('pr', r);      print('completed pr')
+		pair_history_to_rcp('hurs', r);    print('completed hurs')
+		pair_history_to_rcp('hfls', r);    print('completed hfls')
+		pair_history_to_rcp('evspsbl', r); print('completed evspsbl')
 
 
 print("------------------------------------------------------------------")
