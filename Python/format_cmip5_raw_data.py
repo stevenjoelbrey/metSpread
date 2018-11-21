@@ -8,15 +8,29 @@
 #
 # "variable_Amon_ModelName_scenario_ensembleMember_YYYYMM-YYYYMM.nc"
 # 
-# ModelName = e.g. [ACCESS1.0, ACCESS1.3]
-# variables = [hfls, tp, hurs, huss, mrso, si10, t2m, e]
-# scenarios = [historical, rcp45, rcp85]
-# ensembleMember = r1i1p1
 # 
 # Goals/tasks of this script, in order
 # 1) mergetime : for like files (many models store data in lots of small files) 
-# 2) seldate : for the merged time files. Subset to dates of interest, 198301-210012
-# 3) remapbil : for the 198301-210012 merged and cut files, regrid to a common grid 
+#    it makes sense to merge variables into a single file. In this script this task
+#    is completed by the make_var_files() method. These files are output into the 
+#    directory r1i1p1_merged_time.
+# 2) Cut merged historical files and rcp files to the desired date range. This uses
+#    the data in r1i1p1_merged_time and cuts historical files to 1983-2005, puts them
+#    in r1i1p1_history_cut and rcp files to 2006-2100 and puts them in r1i1p1_rcp_cut. 
+#    This is performed by the make_var_files() method. 
+# 3) Finally, we want to pair history files to rcp files, because this is one continious
+#    set of model output for a given model, variable, scenario. This is done with the
+#    pair_history_to_rcp() method. This file lists the history file for which a merged
+#    rcp file match could not be found. It is worth making sure that these data do
+#    not exist on https://esgf-node.llnl.gov/, or it may otherwise mean that the data
+#    were never downloaded, or these is something wrong in steps 1 &| 2.
+# 4) remapbil : for the 198301-210012 merged and cut files, they are regridded to a 
+#    common grid using cdo.remapbil. These are the output to actually be used in this 
+#    work. This regridding is only done with the 198301-210012 merged files have the
+#    correct number of months. 
+#
+# Issues raised by this code, box fixed and unresolved are documented in the file
+# "PIPELINE_Description"
 
 makeHistory = False
 makeNew = False
