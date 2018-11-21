@@ -19,6 +19,7 @@
 # 3) remapbil : for the 198301-210012 merged and cut files, regrid to a common grid 
 
 makeHistory = False
+MakeNew = True
 
 import sys
 import os
@@ -82,7 +83,10 @@ def get_var_unique_models(var, scenario, raw_data_dir) :
 def	make_var_files(var, scenario, raw_data_dir) : 
 	"""
 	Merges individual files for a given variable, and scenario, for all models
-	that have output for those. 
+	that have output for those. Files of a like type are merged with cdo.mergetime.
+	That file is written. That file is then read and cut to the desired date range,
+	which is 1983-01-01 to 2005-12-31 and 2006-01-01,2100-12-31 for RCP 4.5 and 8.5.
+	Wouldn't it be cool to live in an RCP4.5 world? Why am I looking at these?
 
 	Parameters
 	----------
@@ -94,6 +98,8 @@ def	make_var_files(var, scenario, raw_data_dir) :
 	return
 	------
 		None, desired output are written as netCDF files. 
+		They should be a file of all dates merged and a file cut to 
+		dates specified above. 
 
 	"""
 
@@ -166,7 +172,7 @@ def	make_var_files(var, scenario, raw_data_dir) :
 				print("This file requires getting more historical data for this variable")
 				print("------------------------------------------------------------------")
 
-			f_seldate = s.replace('*','') + '_198301_200512.nc'
+			f_seldate = s.replace('*','') + '_198301-200512.nc'
 			f_seldate_out = os.path.join(cut_time_dir, f_seldate) 
 			cdo.seldate('1983-01-01,2005-12-31', input=f_out, output=f_seldate_out, options="-b F64")
 
@@ -204,7 +210,7 @@ def	make_var_files(var, scenario, raw_data_dir) :
 				print("This file requires getting more historical data for this variable")
 				print("------------------------------------------------------------------")
 
-			f_seldate = s.replace('*','') + '_200601_210012.nc'
+			f_seldate = s.replace('*','') + '_200601-210012.nc'
 			f_seldate_out = os.path.join(cut_time_dir, f_seldate) 
 			cdo.seldate('2006-01-01,2100-12-31', input=f_out, output=f_seldate_out, options="-b F64")		 
 
@@ -228,7 +234,66 @@ def	make_var_files(var, scenario, raw_data_dir) :
 
 # TODO: Pairing history with RCP files. 
 # TODO: Regridding these merged files to the common grid for the ultimate final out! 
+def pair_history_to_rcp(var, rcp, ensemble='r1i1p1') :
+	"""
+	This funtion pairs the cut historical files to RCP files. It can be used to 
+	show what RCP files still need to be aquired. 
 
+	Parameters
+	----------
+		var : str, the variable to find history and rcp pairs for
+		rcp : str, the rcp to pair to the history file for a given var
+
+	return
+	------
+		Writes a file concatenating RCP future files with their history
+		files. writeen using cdo commands.
+
+	"""
+
+		# e.g. variable_Amon_ModelName_scenario_ensembleMember_YYYYMM-YYYYMM.nc
+	if var == "mrso" : 
+		# Land parameter
+		time_span = '_Lmon_'
+	else :
+		# atmosphere parameter
+		time_span = '_Amon_'
+
+	history_dir = os.path.join(base_dir, 'r1i1p1_history_cut', "")
+	history_models = get_var_unique_models(var, 'historical', history_dir)
+
+	rcp_dir = os.path.join(base_dir, 'r1i1p1_rcp_cut', "")
+
+	for model in history_models :
+
+		# The dates of these files has been set and that was done by make_var_files()
+		history_file = var + time_span + model + '_historical_' + ensemble + "_198301-200512.nc"
+		rcp_file = var + time_span + model + '_' + rcp + '_' + ensemble + "_200601-210012.nc"
+
+		# Link file names to where they live on machine 
+		history_file_path = os.path.join(history_dir, history_file)
+		rcp_file_path = os.path.join(rcp_dir, rcp_file)
+
+		# Make sure rcp file exists before trying to merge
+		if os.path.exists(rcp_file_path) :
+
+			# Hold onto RCP name, since that is what matters past 2005
+			merged_name = var + time_span + model + '_' + rcp + '_' + ensemble + "_198301-210012.nc"
+			history_rcp_out = os.path.join( base_dir, 'r1i1p1_history_rcp_merged', merged_name)
+			# Make files to merge a string that cdo likes 
+			files_to_merge = history_file_path + ' ' + rcp_file_path
+
+			cdo.mergetime(input=files_to_merge, output=history_rcp_out, options="-b F64")
+
+			# TODO: Regrid this merged file to the common grid 
+
+		else :
+			print('------------------------------------------------------------')
+			print('Not available: ' + rcp_file)
+			print('In ' + rcp_dir)
+			print('------------------------------------------------------------')
+
+		# Test for correct number of months in the merged file
 
 
 #------------------------------------------------------------------------------
@@ -244,6 +309,15 @@ if makeHistory == True :
 	make_var_files('hfls', 'historical', raw_data_dir);    print("hfls complete")
 	make_var_files('evspsbl', 'historical', raw_data_dir); print("evspsbl complete")
 
+if MakeNew == True : 
+
+	make_var_files('mrso', 'rcp45', raw_data_dir);    print("mrso 45 complete")
+	make_var_files('huss', 'rcp45', raw_data_dir);    print("huss 45 complete")
+	make_var_files('evspsbl', 'rcp45', raw_data_dir); print("evspsbl 45 complete")
+
+	make_var_files('mrso', 'rcp85', raw_data_dir);    print("mrso 85 complete")
+	make_var_files('huss', 'rcp85', raw_data_dir);    print("huss 85 complete")
+	make_var_files('evspsbl', 'rcp85', raw_data_dir); print("evspsbl 85 complete")
 
 
 print("------------------------------------------------------------------")
