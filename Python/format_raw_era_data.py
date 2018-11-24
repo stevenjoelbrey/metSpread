@@ -66,12 +66,12 @@ for an_var in analysis_vars :
 
 	# Merge yearly files 
 	f_in = glob.glob(os.path.join(dataDir, an_var+"*"))
-	f_out = os.path.join(time_merge_out, an_var+"_"+str(year1)+"_"+str(year2)+".nc")
+	f_out = os.path.join(time_merge_out, an_var+"_"+str(year1)+"-"+str(year2)+".nc")
 	cdo.mergetime(input=" ".join(f_in), output=f_out, options="-b F64")
 
 	# Now regrid the merged t file to the common grid 
 	f_in_common = f_out
-	f_out_common = os.path.join(common_grid_dir, an_var+"_"+str(year1)+"_"+str(year2)+".nc")
+	f_out_common = os.path.join(common_grid_dir, an_var+"_"+str(year1)+"-"+str(year2)+".nc")
 	cdo.remapbil(common_grid_txt, input=f_in_common, output=f_out_common, options="-b F64")
 
 
@@ -92,7 +92,7 @@ for fc_var in forecast_vars :
 	cdo.mergetime(input=" ".join(f_combine_list), output=f_out_combine, options="-b F64")
 
 	# Now, regrid this merged file to the common grid 
-	f_out_common_grid = os.path.join(common_grid_dir, fc_var+"_"+str(year1)+"_"+str(year2)+".nc")
+	f_out_common_grid = os.path.join(common_grid_dir, fc_var+"_"+str(year1)+"-"+str(year2)+".nc")
 	cdo.remapbil(common_grid_txt, input=f_out_combine, output=f_out_common_grid, options="-b F64")
 
 
