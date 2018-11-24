@@ -23,6 +23,15 @@ library(dplyr)
 
 # Read in the region shape data data 
 mtbs <- sf::st_read(dsn="Data/Fire/MTBS/", layer="mtbs_fod_pts_DD")
+lat_mask <- mtbs$Lat < 55
+lon_mask <- mtbs$Long > -134
+m <- lat_mask & lon_mask
+mtbs <- mtbs[m,]
+rm(lat_mask, lon_mask, m)
+
+# Get rid of fires at high latitudes until there is a better way to isolate
+# those divisions
+
 nFires <- dim(mtbs)[1]
 
 mtbs_features <- names(mtbs)
