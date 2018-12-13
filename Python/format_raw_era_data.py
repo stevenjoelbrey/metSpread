@@ -80,16 +80,16 @@ print("Handling the forecasted fields.", forecast_vars)
 # months within the yearly files. 
 for fc_var in forecast_vars :
 
-	for y in years :
-		# Combine month 0Z and 12Z forecast accumulation periods
-		f_in = os.path.join(dataDir, fc_var + "_" + str(y) + ".nc")
-		f_out = os.path.join(dataDir, fc_var + "_merged_0Z12Z_" + str(y) + ".nc")
-		cdo.monsum(input=f_in, output=f_out, options="-b F64")
+	#for y in years :
+	#	# Combine month 0Z and 12Z forecast accumulation periods
+	#	f_in = os.path.join(dataDir, fc_var + "_" + str(y) + ".nc")
+	#	f_out = os.path.join(dataDir, fc_var + "_merged_0Z12Z_" + str(y) + ".nc")
+	#	cdo.monsum(input=f_in, output=f_out, options="-b F64")
 
 	# Merge the yearly files into a single combined file
-	f_combine_list = glob.glob(os.path.join(dataDir, fc_var +  "_merged_0Z12Z_*"))
-	f_out_combine = os.path.join(time_merge_out, fc_var+"_"+str(year1)+"_"+str(year2)+".nc")
-	cdo.mergetime(input=" ".join(f_combine_list), output=f_out_combine, options="-b F64")
+	f_in = glob.glob(os.path.join(dataDir, an_var+"*"))
+	f_out_combine = os.path.join(time_merge_out, fc_var+"_"+str(year1)+"-"+str(year2)+".nc")
+	cdo.mergetime(input=" ".join(f_in), output=f_out_combine, options="-b F64")
 
 	# Now, regrid this merged file to the common grid 
 	f_out_common_grid = os.path.join(common_grid_dir, fc_var+"_"+str(year1)+"-"+str(year2)+".nc")

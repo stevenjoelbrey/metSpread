@@ -80,6 +80,11 @@ for year in years:
 
 	# Analysis fields 
 	# http://apps.ecmwf.int/datasets/data/interim-mdfa/levtype=sfc/
+
+	# "Step 0-12: averages of the precipitation produced from the first 
+	# 12 hours of each 00:00 forecast, plus the precipitation produced from 
+	# the first 12 hours of each 12:00 forecast. The resulting data is temporally 
+	# continuous."
 	if paramDict[var][1] == "fc" :
 		
 		server.retrieve({
@@ -90,8 +95,8 @@ for year in years:
 		    "grid": "0.75/0.75",
 		    "levtype": "sfc",
 		    "param": paramDict[var][0],
-		    "step": "0-12/12-24", # need accumulation of 0-12 AND 12-24 for full day. 
-		    "stream": "mdfa",
+		    "step": "0-12",   # See note above. 
+		    "stream": "mdfa", #(Monthly Means of Daily Forecast Accumulations)
 		    "type": "fc", # forecast field
 		    "target": out,
 		    "format":"netcdf"
