@@ -1,0 +1,12 @@
+README
+
+This folder contains the following directories
+
+CMIP5
+ERA-INTERIM
+Fire
+LandCover
+
+These data are too large to store on github, but for the sake of reproducability
+they are available upon request as well as in the public domain. Please contact
+me with any questions about the data used in this project. 
