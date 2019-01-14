@@ -12,9 +12,10 @@ if len(args) > 1 :
 
 else : 
 	# Set the arguments manually
-	var   = "t2m"
-	year1 = 1990
-	year2 = 1992
+	print("Using hardcoded arguments, none passed at command line")
+	var   = "tp"
+	year1 = 1983
+	year2 = 2017
 
 #------------------------------------------------------------------------------
 # DESCRIPTION:
@@ -27,13 +28,21 @@ else :
 # http://apps.ecmwf.int/datasets/data/interim-mdfa/levtype=sfc/
 # http://apps.ecmwf.int/datasets/data/interim-full-moda/levtype=sfc/
 # https://www.ecmwf.int/en/faq/what-are-definitions-radiation-fields
+# 
+# Detials on analysis fields and forecast fields can be seen in thier respective
+# sections comments below. 
 
 # unless otherwise specified, this is where these raw datafiles should go
 saveDir = "/Users/sbrey/GoogleDrive/sharedProjects/metSpreadData/ERA-Interim"
 
+# If that prefered saveDir does not exist, that means this work is being done
+# on a different machine. Save to backup location.
+
 if not os.path.isdir(saveDir) :
-	# Save where the code is running 
-	saveDir = os.getcwd()
+	# Save where the code is running or otherwise specified
+	# SJB 01/14/2019
+	#saveDir = os.getcwd()
+	saveDir = '/Users/sbrey/Desktop/ecmwf'
 
 print("Writing files to:")
 print(saveDir)
@@ -78,13 +87,17 @@ for year in years:
 	file_name = var + "_" + str(year) + ".nc"
 	out = os.path.join(saveDir , file_name)
 
-	# Analysis fields 
+	# Forecast fields 
 	# http://apps.ecmwf.int/datasets/data/interim-mdfa/levtype=sfc/
-
+	#
+	# Notes on how to get monthly totals from monthly forecast fields
+	# https://confluence.ecmwf.int/pages/viewpage.action?pageId=65218804
+	# 
 	# "Step 0-12: averages of the precipitation produced from the first 
 	# 12 hours of each 00:00 forecast, plus the precipitation produced from 
 	# the first 12 hours of each 12:00 forecast. The resulting data is temporally 
 	# continuous."
+	
 	if paramDict[var][1] == "fc" :
 		
 		server.retrieve({
