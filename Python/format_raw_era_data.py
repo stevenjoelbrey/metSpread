@@ -5,24 +5,25 @@
 #------------------------------------------------------------------------------
 # Format and combine raw monthly means of analysis and forecast fields from 
 # era-interim. 
+#
 # NOTE: This will not include soil moisture, which is more tricky and is handled
 # NOTE: with a script all of its own (Python/format_era_soil_moisture.py). 
 #
-# The two types of data that are downloaded are "Monthly Means of Daily Means" and "Monthly Means of Daily Forecast Accumulations". 
+# The two types of data that are downloaded are "Monthly Means of Daily Means" and 
+# "Monthly Means of Daily Forecast Accumulations". 
 #
 # The difference between these data can be found here:
 # http://apps.ecmwf.int/datasets/data/interim-full-moda/levtype=sfc/
 #
-# For forecast fields, they provide the forecast time period sum for a variable, e.g.
-# evaporation (e). That gives monthly means for 00Z and 12Z 12 hour forecasts. To combine
-# the two time periods monthly means use:
+# For forecast fields, they provide the forecast time period average for a variable, e.g.
+# total precipitation (tp). "Step 0-12: averages of the precipitation produced 
+# from the first 12 hours of each 00:00 forecast, plus the precipitation produced 
+# from the first 12 hours of each 12:00 forecast. The resulting data is temporally 
+# continuous."
+# 
+# https://confluence.ecmwf.int/pages/viewpage.action?pageId=65218804
 #
-# $ cdo -b F64 monsum e_1984.nc e_monsum_1984.n
-#
-# That combines the 0Z and 12Z forecasts for a month and I have confirmed this 
-# by looking at the raw data.
-#
-# Those yearly monthly total monsum files need to be combined into a single file
+# The yearly monthly mean files need to be combined into a single file
 # for the years of interest. That can be done using
 #
 # $ cdo -b F64 mergtime e* e_year1_year2.nc 
@@ -39,6 +40,7 @@ if len(args) > 1 :
 	year1 = int(args[2])
 	year2 = int(args[3])
 else :
+	print("Using hard-coded years")
 	year1 = 1983
 	year2 = 2017
 
@@ -56,8 +58,9 @@ common_grid_txt = os.path.join(dataDir,"COMMON_GRID.txt")
 cdo = cdo.Cdo()
 
 # Variables to combine data for
-analysis_vars = ['t2m', 'si10', 'd2m']
-forecast_vars = ['e', 'tp', 'slhf']
+analysis_vars = ['t2m', 'si10', 'd2m', 'sp']
+forecast_vars = ['e', 'tp', 'slhf', 'uvb', 'strd', 'ssrd']
+
 
 print("Handling the analysis fields.", analysis_vars)
 # Combine yearly files for analysis fields, as there is nothing to do with different
@@ -80,14 +83,8 @@ print("Handling the forecasted fields.", forecast_vars)
 # months within the yearly files. 
 for fc_var in forecast_vars :
 
-	#for y in years :
-	#	# Combine month 0Z and 12Z forecast accumulation periods
-	#	f_in = os.path.join(dataDir, fc_var + "_" + str(y) + ".nc")
-	#	f_out = os.path.join(dataDir, fc_var + "_merged_0Z12Z_" + str(y) + ".nc")
-	#	cdo.monsum(input=f_in, output=f_out, options="-b F64")
-
 	# Merge the yearly files into a single combined file
-	f_in = glob.glob(os.path.join(dataDir, an_var+"*"))
+	f_in = glob.glob(os.path.join(dataDir, fc_var+"*"))
 	f_out_combine = os.path.join(time_merge_out, fc_var+"_"+str(year1)+"-"+str(year2)+".nc")
 	cdo.mergetime(input=" ".join(f_in), output=f_out_combine, options="-b F64")
 
@@ -98,4 +95,3 @@ for fc_var in forecast_vars :
 
 print("Script ececuted without error")
 print("Woot woot!")
-
