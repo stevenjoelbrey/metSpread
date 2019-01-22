@@ -4,10 +4,15 @@
 # DESCRIPTION:
 #------------------------------------------------------------------------------
 
-# 1) Reads in MTBS data as points and assigns them to an ecoregion. 
+# 1) Reads in MTBS data as points and assigns them to an ecoregion. CONUS ONLY!
 # 2) Make monthly burn area totals by ecoregion and write them to csv files. 
 # 3) Make modular so I can change my mind about what I want. 
 
+# NOTE: There have been restrictions placed on latitude. This affects the
+# NOTE: 'Marine Regime Mountain' Division. 
+
+maxLat <- 51. # Wiggle room for fires with coords near canadian border. 
+minLon <- -134. # Wiggle room for wildfires near the coast in Washington. 
 # Ecoregions used for classification:
 # https://www.fs.fed.us/rm/ecoregions/products/map-ecoregions-united-states/#
 # https://www.fs.fed.us/rm/ecoregions/downloads/ecoregions-united-states/data-sets/eco-us-shp.zip
@@ -23,14 +28,13 @@ library(dplyr)
 
 # Read in the region shape data data 
 mtbs <- sf::st_read(dsn="Data/Fire/MTBS/", layer="mtbs_fod_pts_DD")
-lat_mask <- mtbs$Lat < 55
-lon_mask <- mtbs$Long > -134
+lat_mask <- mtbs$Lat <= maxLat 
+lon_mask <- mtbs$Long > minLon
 m <- lat_mask & lon_mask
 mtbs <- mtbs[m,]
 rm(lat_mask, lon_mask, m)
 
-# Get rid of fires at high latitudes until there is a better way to isolate
-# those divisions
+
 
 nFires <- dim(mtbs)[1]
 
@@ -197,3 +201,5 @@ Province_burn_area <- sum_acres_by_region(mtbs_no_geo, region="BAILY_PROVINCE")
 # Write these region summaries 
 write.csv(Division_burn_area, file="Data/Fire/MTBS/bailys_division_acres_burned.csv")
 write.csv(Province_burn_area, file="Data/Fire/MTBS/bailys_province_acres_burned.csv")
+
+print("Script executed without error.")
