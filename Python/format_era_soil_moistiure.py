@@ -21,6 +21,9 @@
 #  |  *----|--*         Z4 = 1.00 - 2.89 m 
 #  | /     | /      
 #  *-------*      
+# 
+# Soil depths for layers 1-4 are Balsamo et al. 2009 but seen in Albergel et al 2012. 
+# https://journals.ametsoc.org/doi/10.1175/2008JHM1068.1
 #
 # ERA gives us the fraction of a volume of soil of depth Z that is water in some
 # phase (liquid or ice). The depth of this volume is 2.89 m, and the unit area of 
