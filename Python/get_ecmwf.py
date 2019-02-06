@@ -117,7 +117,7 @@ for year in years:
 
 	# Anlysis fields
 	# http://apps.ecmwf.int/datasets/data/interim-full-moda/levtype=sfc/
-	# http://apps.ecmwf.int/datasets/data/interim-land/type=an/ for soil moisture
+	# https://apps.ecmwf.int/datasets/data/interim-full-moda/levtype=sfc/ for soil moisture also. ERA-Land only goes to 2010.
 	elif paramDict[var][1] == "an" :
 		server.retrieve({
 		    "class": "ei",
