@@ -11,6 +11,10 @@
 # NOTE: There have been restrictions placed on latitude. This affects the
 # NOTE: 'Marine Regime Mountain' Division. 
 
+# NOTE: Because of our interest in biophysical controls on fire area we exclude
+# NOTE: RX Types from these analysis. Prescribed fires labelled both "RX" and '
+# NOTE: "Rx", so make sure to catch both types. 
+
 maxLat <- 51. # Wiggle room for fires with coords near canadian border. 
 minLon <- -134. # Wiggle room for wildfires near the coast in Washington. 
 # Ecoregions used for classification:
@@ -25,12 +29,13 @@ library(lubridate)
 library(sp)
 library(dplyr)
 
-
 # Read in the region shape data data 
 mtbs <- sf::st_read(dsn="Data/Fire/MTBS/", layer="mtbs_fod_pts_DD")
+# TRUE where we want to keep
 lat_mask <- mtbs$Lat <= maxLat 
 lon_mask <- mtbs$Long > minLon
-m <- lat_mask & lon_mask
+type_mask <- (mtbs$Fire_Type != "RX") & (mtbs$Fire_Type != "Rx")
+m <- lat_mask & lon_mask & type_mask 
 mtbs <- mtbs[m,]
 rm(lat_mask, lon_mask, m)
 
