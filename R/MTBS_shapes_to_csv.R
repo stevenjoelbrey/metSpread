@@ -28,6 +28,7 @@ library(sf)
 library(lubridate)
 library(sp)
 library(dplyr)
+library(maps)
 
 # Read in the region shape data data 
 mtbs <- sf::st_read(dsn="Data/Fire/MTBS/", layer="mtbs_fod_pts_DD")
@@ -40,7 +41,6 @@ mtbs <- mtbs[m,]
 rm(lat_mask, lon_mask, m)
 
 
-
 nFires <- dim(mtbs)[1]
 
 mtbs_features <- names(mtbs)
@@ -48,6 +48,12 @@ mtbs_features <- names(mtbs)
 #                            "Post_ID", "Fire_Type", "ND_T", "IG_T",        
 #                            "Low_T", "Mod_T", "High_T", "Ig_Date",    
 #                            "Lat", "Long" ,"Acres", "geometry")
+
+# Sanity checks 
+quartz()
+plot(mtbs$Long, mtbs$Lat, pch=".", col="red")
+map("state", add=T)
+title("Alaska excluded, fire locations to grid")
 
 # Get ignition dates as Date object 
 ignition_dates <- mtbs$Ig_Date
@@ -58,17 +64,20 @@ mtbs$Ig_year   <- lubridate::year(ignition_dates)
 mtbs_fire_month <- as.POSIXct(paste(mtbs$Ig_year, mtbs$Ig_month, "15", sep="-"), tz="UTC")
 mtbs$mtbs_fire_month <- mtbs_fire_month
 
-
-# Read in baily ecoregions
+# Read in baileys ecoregions
 bailys <- sf::st_read(dsn="Data/LandCover/eco-us-shp/", layer="eco_us")
 bailys <- st_transform(bailys, crs=st_crs(mtbs))
 
 pdf(file="Data/LandCover/eco-us-shp/PROVINCE.pdf", height=6, width = 10)
 plot(bailys["PROVINCE"], xlim=c(-130, -60), ylim=c(23,51))
+map("state", add=T)
+points(mtbs$Long, mtbs$Lat, pch=".")
 dev.off()
 
 pdf(file="Data/LandCover/eco-us-shp/DIVISION.pdf", height=6, width = 10)
 plot(bailys["DIVISION"], xlim=c(-130, -60), ylim=c(23,51))
+map("state", add=T)
+points(mtbs$Long, mtbs$Lat, pch=".")
 dev.off()
 
 # TODO: Optional spatial attribute
