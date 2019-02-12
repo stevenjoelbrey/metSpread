@@ -92,7 +92,7 @@ for y in years :
 	#--------------------------------------------------------------------------
 	# Write this as a new nc file
 	#--------------------------------------------------------------------------
-	outputFile = os.path.join(dataDir, "mrso_" + str(y) + ".nc")
+	outputFile = os.path.join(dataDir, "mrlsl.integrated_" + str(y) + ".nc")
 
 	nc_out = Dataset(outputFile, 'w', format='NETCDF4')
 	nc_out.description = 'Soil moisture (water+ice) per unit area'
@@ -101,7 +101,7 @@ for y in years :
 	nc_out.createDimension('latitude', len(nc.variables["latitude"]) )
 	nc_out.createDimension('longitude', len(nc.variables["longitude"]) )
 
-	VAR_ = nc_out.createVariable("mrso", 'f4',('time', 'latitude','longitude'))
+	VAR_ = nc_out.createVariable("mrlsl.integrated", 'f4',('time', 'latitude','longitude'))
 	VAR_.long_name = "Total Soil Moisture Content"
 	VAR_.units = "kg m-2"
 
@@ -135,12 +135,12 @@ for y in years :
 # file
 print("Combining and regridding files using cdo()")
 
-f_in = glob.glob(os.path.join(dataDir, "mrso_*"))
-f_out = os.path.join(time_merge_out, "mrso_"+str(year1)+"_"+str(year2)+".nc")
+f_in = glob.glob(os.path.join(dataDir, "mrlsl.integrated_*"))
+f_out = os.path.join(time_merge_out, "mrlsl.integrated_"+str(year1)+"_"+str(year2)+".nc")
 cdo.mergetime(input=" ".join(f_in), output=f_out, options="-b F64")
 
 # Now, create a version of that file that lives on the common grid 
-f_out_common_grid = os.path.join(common_grid_dir, "mrso_"+str(year1)+"_"+str(year2)+".nc")
+f_out_common_grid = os.path.join(common_grid_dir, "mrlsl.integrated_"+str(year1)+"_"+str(year2)+".nc")
 cdo.remapbil(common_grid_txt, input=f_out, output=f_out_common_grid, options="-b F64")
 
 print("Script ececuted without error")
