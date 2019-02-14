@@ -23,18 +23,24 @@
 #    pair_history_to_rcp() method. This file lists the history file for which a merged
 #    rcp file match could not be found. It is worth making sure that these data do
 #    not exist on https://esgf-node.llnl.gov/, or it may otherwise mean that the data
-#    were never downloaded, or these is something wrong in steps 1 &| 2.
+#    were never downloaded, or there is something wrong in steps 1 &| 2.
 # 4) remapbil : for the 198301-210012 merged and cut files, they are regridded to a 
 #    common grid using cdo.remapbil. These are the output to actually be used in this 
 #    work. This regridding is only done with the 198301-210012 merged files have the
 #    correct number of months. 
 #
+# NOTE: For optimal mrlsl_integrated availability, run interpolate_mrlsl first. 
+#
+#
 # Issues raised by this code, box fixed and unresolved are documented in the file
-# "PIPELINE_Description"
+# "format_cmip5_raw_data_print_statements.txt"
+# created via $ python format_cmip5_raw_data.py > ../Data/CMIP5/format_cmip5_raw_data_print_statements.txt
 
-makeHistory = False
-makeNew = False
-makePairs = False
+
+
+makeHistory = True
+makeNew = True
+makePairs = True
 
 import sys
 import os
@@ -43,6 +49,11 @@ import numpy as np
 import cdo as cdo
 import shutil
 from netCDF4 import Dataset
+
+# Set up text file to save all print statements to
+#orig_stdout = sys.stdout
+#f = open('out.txt', 'w')
+#sys.stdout = f
 
 cdo = cdo.Cdo()
 
@@ -125,7 +136,8 @@ def	make_var_files(var, scenario, raw_data_dir) :
 	for model in var_available_models :
 
 		# e.g. variable_Amon_ModelName_scenario_ensembleMember_YYYYMM-YYYYMM.nc
-		if var == "mrso" : 
+		# TODO: Handle name of top soil variable here. 
+		if var == "mrso" or var == "mrlsl.integrated" : 
 			# Land parameter
 			time_span = '_Lmon_'
 		else :
@@ -135,6 +147,10 @@ def	make_var_files(var, scenario, raw_data_dir) :
 		# Create a string that will list disired files
 		s = var + time_span + model + '_' + scenario + '_' + ensemble + "*"
 		l = glob.glob(os.path.join(raw_data_dir, s))
+
+		#print(model)
+		#print(s)
+		#print(l)
 
 		if len(l) == 0 :
 			print("No files found for inquery related to:")
@@ -267,7 +283,7 @@ def pair_history_to_rcp(var, rcp, ensemble='r1i1p1') :
 	"""
 
 		# e.g. variable_Amon_ModelName_scenario_ensembleMember_YYYYMM-YYYYMM.nc
-	if var == "mrso" : 
+	if var == "mrso" or var == "mrlsl.integrated" : 
 		# Land parameter
 		time_span = '_Lmon_'
 	else :
@@ -336,40 +352,70 @@ def pair_history_to_rcp(var, rcp, ensemble='r1i1p1') :
 #------------------------------------------------------------------------------
 # For a given var, and scenario, cary out tasks 1-3 for all models 
 #------------------------------------------------------------------------------
-if makeHistory == True :
-	make_var_files('sfcWind', 'historical', raw_data_dir); print("sfcWind complete")
-	make_var_files('tas', 'historical', raw_data_dir);     print("tas complete")
-	make_var_files('mrso', 'historical', raw_data_dir);    print("mrso complete")
-	make_var_files('huss', 'historical', raw_data_dir);    print("huss complete")
-	make_var_files('pr', 'historical', raw_data_dir);      print("pr complete")
-	make_var_files('hurs', 'historical', raw_data_dir);    print("hurs complete")
-	make_var_files('hfls', 'historical', raw_data_dir);    print("hfls complete")
-	make_var_files('evspsbl', 'historical', raw_data_dir); print("evspsbl complete")
+# NOTE: All lines to be uncommented when running all variables
+if makeHistory :
+	print("Working on making history files.")
+	#make_var_files('sfcWind', 'historical', raw_data_dir); print("sfcWind complete")
+	#make_var_files('tas', 'historical', raw_data_dir);     print("tas complete")
+	#make_var_files('mrso', 'historical', raw_data_dir);    print("mrso complete")
+	#make_var_files('mrlsl.integrated', 'historical', raw_data_dir); print("mrlsl.integrated complete")
+	#make_var_files('huss', 'historical', raw_data_dir);    print("huss complete")
+	#make_var_files('pr', 'historical', raw_data_dir);      print("pr complete")
+	#make_var_files('hurs', 'historical', raw_data_dir);    print("hurs complete")
+	#make_var_files('hfls', 'historical', raw_data_dir);    print("hfls complete")
+	#make_var_files('evspsbl', 'historical', raw_data_dir); print("evspsbl complete")
+	print("----------------------------------")
+	print("Made history files without error")
+	print("----------------------------------")
 
-if makeNew == True : 
+if makeNew : 
 	# Related to the newly downloaded data, when the project rebooted in concept
 	# near the beginning of Nov 2018
-	make_var_files('mrso', 'rcp45', raw_data_dir);    print("mrso 45 complete")
-	make_var_files('huss', 'rcp45', raw_data_dir);    print("huss 45 complete")
-	make_var_files('evspsbl', 'rcp45', raw_data_dir); print("evspsbl 45 complete")
+	print("Make new RCP45")
+	make_var_files('sfcWind', 'rcp45', raw_data_dir); print("sfcWind complete")
+	make_var_files('tas', 'rcp45', raw_data_dir);     print("tas complete")
+	make_var_files('mrso', 'rcp45', raw_data_dir);    print("mrso complete")
+	make_var_files('mrlsl.integrated', 'rcp45', raw_data_dir); print("mrlsl.integrated complete")
+	make_var_files('huss', 'rcp45', raw_data_dir);    print("huss complete")
+	make_var_files('pr', 'rcp45', raw_data_dir);      print("pr complete")
+	make_var_files('hurs', 'rcp45', raw_data_dir);    print("hurs complete")
+	make_var_files('hfls', 'rcp45', raw_data_dir);    print("hfls complete")
+	make_var_files('evspsbl', 'rcp45', raw_data_dir); print("evspsbl complete")
 
-	make_var_files('mrso', 'rcp85', raw_data_dir);    print("mrso 85 complete")
-	make_var_files('huss', 'rcp85', raw_data_dir);    print("huss 85 complete")
-	make_var_files('evspsbl', 'rcp85', raw_data_dir); print("evspsbl 85 complete")
+	print("Make new RCP85")
+	make_var_files('sfcWind', 'rcp85', raw_data_dir); print("sfcWind complete")
+	make_var_files('tas', 'rcp85', raw_data_dir);     print("tas complete")
+	make_var_files('mrso', 'rcp85', raw_data_dir);    print("mrso complete")
+	make_var_files('mrlsl.integrated', 'rcp85', raw_data_dir); print("mrlsl.integrated complete")
+	make_var_files('huss', 'rcp85', raw_data_dir);    print("huss complete")
+	make_var_files('pr', 'rcp85', raw_data_dir);      print("pr complete")
+	make_var_files('hurs', 'rcp85', raw_data_dir);    print("hurs complete")
+	make_var_files('hfls', 'rcp85', raw_data_dir);    print("hfls complete")
+	make_var_files('evspsbl', 'rcp85', raw_data_dir); print("evspsbl complete")
 
-if makePairs == True : 
+	print("----------------------------------")
+	print("Made RCP files without error")
+	print("----------------------------------")
+
+if makePairs : 
+
 	#pair_history_to_rcp('tas', 'rcp85', ensemble='r1i1p1')
 	for r in ['rcp85', 'rcp45'] :
+
 		print("Working on pairing history to " + r)
 		pair_history_to_rcp('tas', r);     print("completed tas")
 		pair_history_to_rcp('sfcWind', r); print('completed sfcWind')
 		pair_history_to_rcp('mrso', r);    print('completed mrso')
+		pair_history_to_rcp('mrlsl.integrated', r);    print('completed mrlsl.integrated')
 		pair_history_to_rcp('huss', r);    print('completed huss')
 		pair_history_to_rcp('pr', r);      print('completed pr')
 		pair_history_to_rcp('hurs', r);    print('completed hurs')
 		pair_history_to_rcp('hfls', r);    print('completed hfls')
 		pair_history_to_rcp('evspsbl', r); print('completed evspsbl')
 
+	print("----------------------------------")
+	print("Paired RCP to history without error")
+	print("----------------------------------")
 
 print("------------------------------------------------------------------")
 print("Script executed without fail")
