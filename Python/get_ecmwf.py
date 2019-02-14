@@ -75,6 +75,7 @@ paramDict = {"t2m":["167.128", "an"],  # 2-meter temperature
 			 "ssrd":["169.128", "fc"], # Surface solar radiation downwards
 			 "strd":["175.128", "fc"], # Surface thermal radiation downwards
 			 "slhf":["147.128", "fc"], # surface latent heat flux
+			 "ro":["205.128", "fc"],          # Runoff 
 			 "soil":["39.128/40.128/41.128/42.128", "an"] # soil moisture, levels 1-4, to be combined. 
 			 }
 
