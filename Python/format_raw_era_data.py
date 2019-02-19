@@ -59,7 +59,7 @@ cdo = cdo.Cdo()
 
 # Variables to combine data for
 analysis_vars = ['t2m', 'si10', 'd2m', 'sp']
-forecast_vars = ['e', 'tp', 'slhf', 'uvb', 'strd', 'ssrd']
+forecast_vars = ['e', 'tp', 'slhf', 'ro','uvb', 'strd', 'ssrd']
 
 
 print("Handling the analysis fields.", analysis_vars)
@@ -84,7 +84,7 @@ print("Handling the forecasted fields.", forecast_vars)
 for fc_var in forecast_vars :
 
 	# Merge the yearly files into a single combined file
-	f_in = glob.glob(os.path.join(dataDir, fc_var+"*"))
+	f_in = glob.glob(os.path.join(dataDir, fc_var+"_*"))
 	f_out_combine = os.path.join(time_merge_out, fc_var+"_"+str(year1)+"-"+str(year2)+".nc")
 	cdo.mergetime(input=" ".join(f_in), output=f_out_combine, options="-b F64")
 
