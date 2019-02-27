@@ -42,8 +42,8 @@ import cdo as cdo
 # Read command line arguments
 args  = sys.argv
 if len(args) > 1 :
-	year1 = int(args[2])
-	year2 = int(args[3])
+	year1 = int(args[1])
+	year2 = int(args[2])
 else :
 	year1 = 1983
 	year2 = 2017
@@ -102,7 +102,7 @@ for y in years :
 	nc_out.createDimension('longitude', len(nc.variables["longitude"]) )
 
 	VAR_ = nc_out.createVariable("mrlsl.integrated", 'f4',('time', 'latitude','longitude'))
-	VAR_.long_name = "Total Soil Moisture Content"
+	VAR_.long_name = "Total Soil Moisture Content to 2.89 m"
 	VAR_.units = "kg m-2"
 
 	# Create time variable
@@ -140,8 +140,8 @@ f_out = os.path.join(time_merge_out, "mrlsl.integrated_"+str(year1)+"_"+str(year
 cdo.mergetime(input=" ".join(f_in), output=f_out, options="-b F64")
 
 # Now, create a version of that file that lives on the common grid 
-f_out_common_grid = os.path.join(common_grid_dir, "mrlsl.integrated_"+str(year1)+"_"+str(year2)+".nc")
+f_out_common_grid = os.path.join(common_grid_dir, "mrlsl.integrated_"+str(year1)+"-"+str(year2)+".nc")
 cdo.remapbil(common_grid_txt, input=f_out, output=f_out_common_grid, options="-b F64")
 
 print("Script ececuted without error")
-print("Woot woot!")
+print("Woot woot! Its the small things. There are enough tears in graduate school.")
