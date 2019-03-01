@@ -7,7 +7,7 @@ import pandas as pd # TODO: Lots of training
 import glob as glob
 
 
-def get_all_model_names(dataDir) :
+def get_all_model_names(dataDir="../Data/CMIP5/r1i1p1_rcp_COMMON_GRID") :
     """
     Gets all the unique CMIP5 model names available in the dataDir 
     directory. Returned as an array.  
