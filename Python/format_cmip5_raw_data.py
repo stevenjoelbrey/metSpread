@@ -42,9 +42,9 @@
 
 # NOTE: HADGEM-ES has a very strange (late) history period. 
 
-makeHistory = True
-makeNew     = True
-makePairs   = True
+makeHistory = False
+makeNew     = False
+makePairs   = False
 
 import sys
 import os
@@ -154,9 +154,11 @@ def	make_var_files(var, scenario, raw_data_dir) :
 		s = var + time_span + model + '_' + scenario + '_' + ensemble + "*" # YYYYMM-YYYYMM.nc
 		l = glob.glob(os.path.join(raw_data_dir, s))
 
-		#print(model)
-		#print(s)
-		#print(l)
+		print("start--------------------------------------------")
+		print("Working on query:")
+		print(model)
+		print(s)
+		print("There are %i files to merge for query: " % len(l) )
 
 		if len(l) == 0 :
 
@@ -176,14 +178,18 @@ def	make_var_files(var, scenario, raw_data_dir) :
 			f_merged_time_out = s.replace('*','') + '_' + minDate + '-' + maxDate + '.nc'
 
 			if len(l) == 1 :
+
 				# No time merge required, the dates are represented by a single
 				# file. Copy this file and place in desired merged_time directory 
+				print("Single file being coppied")
 				f_in = os.path.join(raw_data_dir, f_merged_time_out)
 				f_out = os.path.join(merged_time_dir, f_merged_time_out)
 				# do the copying 
 				shutil.copy(f_in, f_out)
 
 			else : 
+
+				print("Merging the %i files associated with query" % len(l))
 				# Make a single string of files to merge, to pass to cdo command 
 				files_to_merge = " ".join(l)
 
@@ -212,12 +218,12 @@ def	make_var_files(var, scenario, raw_data_dir) :
 					# TODO: HadGem will often throw an error here. 
 					# TODO: When this is the case, simply append the require set of months from
 					# TODO: an RCP file. 
-					print("------------------------------------------------------------------")
+					print("***************************************")
 					print("ERROR- model last date not late enough")
 					print("WRONG DATES for " + s)
 					print("The max date in the file was " + maxDate)
 					print("This file requires a manual addition of first month of an RCP file")
-					print("------------------------------------------------------------------")
+					print("***************************************")
 					hist_date_2 = maxDate
 				else :
 					# If the max date of the history files was bigger than date below, they 
@@ -227,12 +233,12 @@ def	make_var_files(var, scenario, raw_data_dir) :
 
 				# maxDate from r1i1p1_raw_downloaded_files for this type
 				if int(minDate) > int(198301) :
-					print("------------------------------------------------------------------")
+					print("***************************************")
 					print("ERROR- model file data do not have early enough start date")
 					print("WRONG DATES for " + s)
 					print("The min date in the file was " + minDate)
 					print("This file requires getting more historical data for this variable")
-					print("------------------------------------------------------------------")
+					print("***************************************")
 					hist_date_1 = minDate
 
 				else :
@@ -252,11 +258,11 @@ def	make_var_files(var, scenario, raw_data_dir) :
 				t = nc.variables['time'][:]
 				nc.close()
 				if len(t) != 276 :
-					print("------------------------------------------------------------------")
+					print("***************************************")
 					print("ERROR- merged and cut date file does not have correct # of months")
 					print("The correct number of months should be 276, got %i " % len(t) )
 					print(s)
-					print("------------------------------------------------------------------")
+					print("***************************************")
 					# If the file is not corret, delete it! This will make it easier to see
 					# what history files we are missing and then we can make changes to those
 					# and fill in the gaps. 
@@ -268,23 +274,23 @@ def	make_var_files(var, scenario, raw_data_dir) :
 				cut_time_dir = os.path.join(base_dir, "r1i1p1_rcp_cut/")
 
 				if int(maxDate) < int(210012) :
-					print("------------------------------------------------------------------")
+					print("***************************************")
 					print("ERROR- model last date not late enough")
 					print("WRONG DATES for " + s)
 					print("The max date in the file was " + maxDate)
 					print("This file requires a manual addition of first month of an RCP file")
-					print("------------------------------------------------------------------")
+					print("***************************************")
 					rcp_date_2 = maxDate
 				else :
 					rcp_date_2 = '210012'
 
 				if int(minDate) > int(200601) :
-					print("------------------------------------------------------------------")
+					print("***************************************")
 					print("ERROR- model file data do not have earlier enough start date")
 					print("WRONG DATES for " + s)
 					print("The min date in the file was " + minDate)
 					print("This file requires getting more historical data for this variable")
-					print("------------------------------------------------------------------")
+					print("***************************************")
 					rcp_date_1 = minDate
 				else :
 					rcp_date_1 = "200601"
@@ -303,15 +309,17 @@ def	make_var_files(var, scenario, raw_data_dir) :
 				nc.close()
 
 				if len(t) != 1140 :
-					print("----------------------------------------------------------------------")
+					print("***************************************")
 					print("ERROR- merged and cut date file does not have correct number of months")
 					print("The correct number of months should be 1140, got %i " % len(t) )
 					print(len(np.unique(t)))
 					print(f_seldate_out)
 					print("The file will be deleted. It is too dangerous to be left alive.")
-					print("----------------------------------------------------------------------")
+					print("***************************************")
 					# If the file is not corret, delete it! 
 					os.remove(f_seldate_out)
+
+		print("----------------------------------------------end")		
 
 
 # TODO: Pairing history with RCP files. 
@@ -420,7 +428,7 @@ if makeHistory :
 	#make_var_files('sfcWind', 'historical', raw_data_dir); print("sfcWind complete")
 	#make_var_files('tas', 'historical', raw_data_dir);     print("tas complete")
 	#make_var_files('mrso', 'historical', raw_data_dir);    print("mrso complete")
-	make_var_files('mrlsl.integrated', 'historical', raw_data_dir); print("mrlsl.integrated complete")
+	#make_var_files('mrlsl.integrated', 'historical', raw_data_dir); print("mrlsl.integrated complete")
 	#make_var_files('huss', 'historical', raw_data_dir);    print("huss complete")
 	#make_var_files('pr', 'historical', raw_data_dir);      print("pr complete")
 	#make_var_files('hurs', 'historical', raw_data_dir);    print("hurs complete")
@@ -437,7 +445,7 @@ if makeNew :
 	#make_var_files('sfcWind', 'rcp45', raw_data_dir); print("sfcWind complete")
 	#make_var_files('tas', 'rcp45', raw_data_dir);     print("tas complete")
 	#make_var_files('mrso', 'rcp45', raw_data_dir);    print("mrso complete")
-	make_var_files('mrlsl.integrated', 'rcp45', raw_data_dir); print("mrlsl.integrated complete")
+	#make_var_files('mrlsl.integrated', 'rcp45', raw_data_dir); print("mrlsl.integrated complete")
 	#make_var_files('huss', 'rcp45', raw_data_dir);    print("huss complete")
 	#make_var_files('pr', 'rcp45', raw_data_dir);      print("pr complete")
 	#make_var_files('hurs', 'rcp45', raw_data_dir);    print("hurs complete")
@@ -448,7 +456,7 @@ if makeNew :
 	#make_var_files('sfcWind', 'rcp85', raw_data_dir); print("sfcWind complete")
 	#make_var_files('tas', 'rcp85', raw_data_dir);     print("tas complete")
 	#make_var_files('mrso', 'rcp85', raw_data_dir);    print("mrso complete")
-	make_var_files('mrlsl.integrated', 'rcp85', raw_data_dir); print("mrlsl.integrated complete")
+	#make_var_files('mrlsl.integrated', 'rcp85', raw_data_dir); print("mrlsl.integrated complete")
 	#make_var_files('huss', 'rcp85', raw_data_dir);    print("huss complete")
 	#make_var_files('pr', 'rcp85', raw_data_dir);      print("pr complete")
 	#make_var_files('hurs', 'rcp85', raw_data_dir);    print("hurs complete")
@@ -468,7 +476,7 @@ if makePairs :
 		#pair_history_to_rcp('tas', r);     print("completed tas")
 		#pair_history_to_rcp('sfcWind', r); print('completed sfcWind')
 		#pair_history_to_rcp('mrso', r);    print('completed mrso')
-		pair_history_to_rcp('mrlsl.integrated', r);    print('completed mrlsl.integrated')
+		#pair_history_to_rcp('mrlsl.integrated', r);    print('completed mrlsl.integrated')
 		#pair_history_to_rcp('huss', r);    print('completed huss')
 		#pair_history_to_rcp('pr', r);      print('completed pr')
 		#pair_history_to_rcp('hurs', r);    print('completed hurs')
