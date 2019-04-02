@@ -329,7 +329,10 @@ def pair_history_to_rcp(var, rcp, ensemble='r1i1p1') :
 	return
 	------
 		Writes a file concatenating RCP future files with their history
-		files. writeen using cdo commands.
+		files. written using cdo commands. A file in the model native
+		resolution is written to r1i1p1_history_rcp_merged directory 
+		and the same file with the new interpolated common grid is 
+		written to r1i1p1_rcp_COMMON_GRID directory. 
 
 	"""
 
@@ -355,15 +358,18 @@ def pair_history_to_rcp(var, rcp, ensemble='r1i1p1') :
 		history_file = var + time_span + model + "_historical_r1i1p1_198301-200512.nc"
 		rcp_file = var + time_span + model + '_' + rcp + "_r1i1p1_200601-210012.nc"
 
-		# Link file names to where they live on machine 
+		# Link file names to where they live on local machine 
 		history_file_path = os.path.join(history_dir, history_file)
-		rcp_file_path = os.path.join(rcp_dir, rcp_file)
+		rcp_file_path     = os.path.join(rcp_dir, rcp_file)
 
-		# Make sure rcp file exists before trying to merge
+		print("Linking: " + history_file)
+		print("To: " + rcp_file)
+
+		# Make sure the corresponding rcp file exists before trying to merge
 		if os.path.exists(rcp_file_path) :
 
 			# Hold onto RCP name, since that is what matters past 2005
-			merged_name = var + time_span + model + '_' + rcp + '_' + ensemble + "_198301-210012.nc"
+			merged_name = var + time_span + model + "_" + rcp + "_r1i1p1_198301-210012.nc"
 			history_rcp_out = os.path.join( base_dir, 'r1i1p1_history_rcp_merged', merged_name)
 			
 			# Make files to merge a string that cdo likes 
@@ -388,10 +394,10 @@ def pair_history_to_rcp(var, rcp, ensemble='r1i1p1') :
 				os.remove(history_rcp_out)
 
 			else :
-				# Regrid this merged file to the common grid 
-				f_out_common = os.path.join(base_dir, 'r1i1p1_rcp_COMMON_GRID', merged_name)
-				cdo.remapbil(common_grid_file, input=history_rcp_out, output=f_out_common, options="-b F64")
 
+				# Regrid this merged file to the common grid 
+				f_out_common_grid = os.path.join(base_dir, 'r1i1p1_rcp_COMMON_GRID', merged_name)
+				cdo.remapbil(common_grid_file, input=history_rcp_out, output=f_out_common_grid, options="-b F64")
 
 		else :
 
