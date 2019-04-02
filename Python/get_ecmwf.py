@@ -14,8 +14,8 @@ else :
 	# Set the arguments manually
 	print("Using hardcoded arguments, none passed at command line")
 	var   = "tp"
-	year1 = 1983
-	year2 = 2017
+	year1 = 1979 # 1983
+	year2 = 1983 # 2017
 
 #------------------------------------------------------------------------------
 # DESCRIPTION:
