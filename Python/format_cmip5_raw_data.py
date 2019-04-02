@@ -40,6 +40,8 @@
 # TODO: Write pandas dataframes to indicate what data are missing, 
 # TODO: or where operations failed. 
 
+# NOTE: HADGEM-ES has a very strange (late) history period. 
+
 makeHistory = True
 makeNew     = True
 makePairs   = True
@@ -61,7 +63,7 @@ import pandas as pd
 cdo = cdo.Cdo()
 
 # Directories to read and write from 
-base_dir = "/Users/sbrey/GoogleDrive/sharedProjects/metSpreadData/getCMIP5"
+base_dir = "../../metSpreadData/getCMIP5"
 raw_data_dir = os.path.join(base_dir, "r1i1p1_raw_downloaded_files/")
 merged_time_dir = os.path.join(base_dir, "r1i1p1_merged_time/")
 common_grid_file = os.path.join(base_dir, 'COMMON_GRID.txt')
@@ -121,7 +123,7 @@ def	make_var_files(var, scenario, raw_data_dir) :
 	Parameters
 	----------
 		var : str, the variable to list files for
-		scenario : str, the scenario to list for a given var
+		scenario : str, the scenario (historical, rcp45, rcp85) to list for a given var
 		raw_data_dir : str, the directory where these queries will be
 		               made
 
@@ -149,7 +151,7 @@ def	make_var_files(var, scenario, raw_data_dir) :
 			time_span = '_Amon_'
 
 		# Create a string that will list disired files
-		s = var + time_span + model + '_' + scenario + '_' + ensemble + "*"
+		s = var + time_span + model + '_' + scenario + '_' + ensemble + "*" # YYYYMM-YYYYMM.nc
 		l = glob.glob(os.path.join(raw_data_dir, s))
 
 		#print(model)
@@ -157,134 +159,159 @@ def	make_var_files(var, scenario, raw_data_dir) :
 		#print(l)
 
 		if len(l) == 0 :
+
+			print("***************************************")
 			print("No files found for inquery related to:")
 			print(s)
-			print(l)
-
-		# Write the name of the merged file, this will be a combo of s and
-		# the span of the dates for the detected files 
-		minDate = l[0][-16:-10] # All nc files end with dates spanned. Can be indexed
-		maxDate = l[-1][-9:-3]  # from the end of the charactor string. 
-		f_merged_time_out = s.replace('*','') + '_' + minDate + '-' + maxDate + '.nc'
-
-		if len(l) == 1 :
-			# No time merge required, the dates are represented by a single
-			# file. Copy this file and place in desired merged_time directory 
-			f_in = os.path.join(raw_data_dir, f_merged_time_out)
-			f_out = os.path.join(merged_time_dir, f_merged_time_out)
-			# do the copying 
-			shutil.copy(f_in, f_out)
+			print("***************************************")
 
 		else : 
-			# Make a single string of files to merge, to pass to cdo command 
-			files_to_merge = " ".join(l)
 
-			# Make merged file name based on span of dates 
-			# NOTE: 'f_merged_time_out' has actual span seen by file names 
-			f_out = os.path.join(merged_time_dir, f_merged_time_out)
+			# There are data, proceed. ---------------------------------------------
 
-			cdo.mergetime(input=files_to_merge, output=f_out, options="-b F64")
+			# Write the name of the merged file, this will be a combo of s and
+			# the span of the dates for the detected files 
+			minDate = l[0][-16:-10] # All nc files end with dates spanned. Can be indexed
+			maxDate = l[-1][-9:-3]  # from the end of the charactor string. 
+			f_merged_time_out = s.replace('*','') + '_' + minDate + '-' + maxDate + '.nc'
 
-		#######################################################################
-		# Cut the newly merged files to the dates of interest only. scenarios
-		# handled differently. 
-		#######################################################################
-		
-		# Historical ----------------------------------------------------------
-		if scenario == 'historical' : 
-			# Handle the desired cut dates for historical files as well as special
-			# errors messages relevant to these cutoffs
-			cut_time_dir = os.path.join(base_dir, "r1i1p1_history_cut/")
+			if len(l) == 1 :
+				# No time merge required, the dates are represented by a single
+				# file. Copy this file and place in desired merged_time directory 
+				f_in = os.path.join(raw_data_dir, f_merged_time_out)
+				f_out = os.path.join(merged_time_dir, f_merged_time_out)
+				# do the copying 
+				shutil.copy(f_in, f_out)
 
-			# maxDate from r1i1p1_raw_downloaded_files for this type
-			if int(maxDate) < int(200512) :
-				# TODO: HadGem will often throw an error here. 
-				# TODO: When this is the case, simply append the require set of months from
-				# TODO: an RCP file. 
-				print("------------------------------------------------------------------")
-				print("ERROR- model last date not late enough")
-				print("WRONG DATES for " + s)
-				print("The max date in the file was " + maxDate)
-				print("This file requires a manual addition of first month of an RCP file")
-				print("------------------------------------------------------------------")
-				hist_date_2 = maxDate
-			else :
-				hist_date_2 = '200512'
+			else : 
+				# Make a single string of files to merge, to pass to cdo command 
+				files_to_merge = " ".join(l)
 
-			# maxDate from r1i1p1_raw_downloaded_files for this type
-			if int(minDate) > int(198301) :
-				print("------------------------------------------------------------------")
-				print("ERROR- model file data do not have early enough start date")
-				print("WRONG DATES for " + s)
-				print("The min date in the file was " + minDate)
-				print("This file requires getting more historical data for this variable")
-				print("------------------------------------------------------------------")
-				hist_date_1 = minDate
+				# Make merged file name based on span of dates 
+				# NOTE: 'f_merged_time_out' has actual span seen by file names 
+				f_out = os.path.join(merged_time_dir, f_merged_time_out)
 
-			else :
-				hist_date_1 = '198301'
+				cdo.mergetime(input=files_to_merge, output=f_out, options="-b F64")
 
-			# TODO: Write with the actual dates, not the ones you hoped for.
-			f_seldate = s.replace('*','') + '_'+hist_date_1+'-'+hist_date_2+'.nc'
-			f_seldate_out = os.path.join(cut_time_dir, f_seldate) 
-			cdo.seldate('1983-01-01,2005-12-31', input=f_out, output=f_seldate_out, options="-b F64")
+			#######################################################################
+			# Cut the newly merged files to the dates of interest only. scenarios
+			# handled differently. 
+			#######################################################################
+			
+			# TODO: Consider using CDO.mergetime on all history files and rcp of a 
+			# TODO: type in one step. Would that solve the missing month problem? 
 
-			# Check for the length of this cut historical file written above.
-			# 1983 - 2005 is 23 years, times 12 months per year, the time dimension
-			# of the cut files should be length 276
-			nc = Dataset(f_seldate_out, 'r')
-			t = nc.variables['time'][:]
-			nc.close()
-			if len(t) != 276 :
-				print("------------------------------------------------------------------")
-				print("ERROR- merged and cut date file does not have correct # of months")
-				print("The correct number of months should be 276, got %i " % len(t) )
-				print(s)
-				print("------------------------------------------------------------------")
-				# If the file is not corret, delete it! 
-				os.remove(f_seldate_out)
+			# Historical ----------------------------------------------------------
+			if scenario == 'historical' : 
+				# Handle the desired cut dates for historical files as well as special
+				# errors messages relevant to these cutoffs
+				cut_time_dir = os.path.join(base_dir, "r1i1p1_history_cut/")
 
-		# RCP 8.5 & 8.5 statements --------------------------------------------
-		if scenario != "historical" :
+				# maxDate from r1i1p1_raw_downloaded_files for this type
+				if int(maxDate) < int(200512) :
+					# TODO: HadGem will often throw an error here. 
+					# TODO: When this is the case, simply append the require set of months from
+					# TODO: an RCP file. 
+					print("------------------------------------------------------------------")
+					print("ERROR- model last date not late enough")
+					print("WRONG DATES for " + s)
+					print("The max date in the file was " + maxDate)
+					print("This file requires a manual addition of first month of an RCP file")
+					print("------------------------------------------------------------------")
+					hist_date_2 = maxDate
+				else :
+					# If the max date of the history files was bigger than date below, they 
+					# will be subset so that the date below is the last date, so label the
+					# file as such. 
+					hist_date_2 = '200512'
 
-			cut_time_dir = os.path.join(base_dir, "r1i1p1_rcp_cut/")
+				# maxDate from r1i1p1_raw_downloaded_files for this type
+				if int(minDate) > int(198301) :
+					print("------------------------------------------------------------------")
+					print("ERROR- model file data do not have early enough start date")
+					print("WRONG DATES for " + s)
+					print("The min date in the file was " + minDate)
+					print("This file requires getting more historical data for this variable")
+					print("------------------------------------------------------------------")
+					hist_date_1 = minDate
 
-			if int(maxDate) < int(210012) :
-				print("------------------------------------------------------------------")
-				print("ERROR- model last date not late enough")
-				print("WRONG DATES for " + s)
-				print("The max date in the file was " + maxDate)
-				print("This file requires a manual addition of first month of an RCP file")
-				print("------------------------------------------------------------------")
+				else :
+					# if the minDate is before the date required, those dates will be cut
+					# so label the file accordingly. 
+					hist_date_1 = '198301'
 
-			if int(minDate) > int(200601) :
-				print("------------------------------------------------------------------")
-				print("ERROR- model file data do not have earlier enough start date")
-				print("WRONG DATES for " + s)
-				print("The min date in the file was " + minDate)
-				print("This file requires getting more historical data for this variable")
-				print("------------------------------------------------------------------")
+				# Write a new file name and write it, with descriptive dates
+				f_seldate = s.replace('*','') + '_'+hist_date_1+'-'+hist_date_2+'.nc'
+				f_seldate_out = os.path.join(cut_time_dir, f_seldate) 
+				cdo.seldate('1983-01-01,2005-12-31', input=f_out, output=f_seldate_out, options="-b F64")
 
-			f_seldate = s.replace('*','') + '_200601-210012.nc'
-			f_seldate_out = os.path.join(cut_time_dir, f_seldate) 
-			cdo.seldate('2006-01-01,2100-12-31', input=f_out, output=f_seldate_out, options="-b F64")		 
+				# Check for the length of this cut historical file written above.
+				# 1983 - 2005 is 23 years, times 12 months per year, the time dimension
+				# of the cut files should be length 276
+				nc = Dataset(f_seldate_out, 'r')
+				t = nc.variables['time'][:]
+				nc.close()
+				if len(t) != 276 :
+					print("------------------------------------------------------------------")
+					print("ERROR- merged and cut date file does not have correct # of months")
+					print("The correct number of months should be 276, got %i " % len(t) )
+					print(s)
+					print("------------------------------------------------------------------")
+					# If the file is not corret, delete it! This will make it easier to see
+					# what history files we are missing and then we can make changes to those
+					# and fill in the gaps. 
+					os.remove(f_seldate_out)
 
-			# Check for the length of this cut historical file written above.
-			# 2006 - 2100 is 95 years, times 12 months per year, the time dimension
-			# of the cut files should be length 1140
-			nc = Dataset(f_seldate_out, 'r')
-			t = nc.variables['time'][:]
-			nc.close()
-			if len(t) != 1140 :
-				print("----------------------------------------------------------------------")
-				print("ERROR- merged and cut date file does not have correct number of months")
-				print("The correct number of months should be 1140, got %i " % len(t) )
-				print(len(np.unique(t)))
-				print(f_seldate_out)
-				print("The file will be deleted. It is too dangerous to be left alive.")
-				print("----------------------------------------------------------------------")
-				# If the file is not corret, delete it! 
-				os.remove(f_seldate_out)
+			# RCP 4.5 or 8.5 statements --------------------------------------------
+			if scenario != "historical" :
+
+				cut_time_dir = os.path.join(base_dir, "r1i1p1_rcp_cut/")
+
+				if int(maxDate) < int(210012) :
+					print("------------------------------------------------------------------")
+					print("ERROR- model last date not late enough")
+					print("WRONG DATES for " + s)
+					print("The max date in the file was " + maxDate)
+					print("This file requires a manual addition of first month of an RCP file")
+					print("------------------------------------------------------------------")
+					rcp_date_2 = maxDate
+				else :
+					rcp_date_2 = '210012'
+
+				if int(minDate) > int(200601) :
+					print("------------------------------------------------------------------")
+					print("ERROR- model file data do not have earlier enough start date")
+					print("WRONG DATES for " + s)
+					print("The min date in the file was " + minDate)
+					print("This file requires getting more historical data for this variable")
+					print("------------------------------------------------------------------")
+					rcp_date_1 = minDate
+				else :
+					rcp_date_1 = "200601"
+
+				# TODO: Consider cutting data to 2095 for creater participation among models,
+				# TODO: e.g. evspsbl RCP85 CMCC-CESM. NOTE: I tried getting that file and failed. 
+				f_seldate = s.replace('*','') + '_'+rcp_date_1+'-'+rcp_date_2+'.nc'
+				f_seldate_out = os.path.join(cut_time_dir, f_seldate) 
+				cdo.seldate('2006-01-01,2100-12-31', input=f_out, output=f_seldate_out, options="-b F64")	
+
+				# Check for the length of this cut historical file written above.
+				# 2006 - 2100 is 95 years, times 12 months per year, the time dimension
+				# of the cut files should be length 1140
+				nc = Dataset(f_seldate_out, 'r')
+				t = nc.variables['time'][:]
+				nc.close()
+				
+				if len(t) != 1140 :
+					print("----------------------------------------------------------------------")
+					print("ERROR- merged and cut date file does not have correct number of months")
+					print("The correct number of months should be 1140, got %i " % len(t) )
+					print(len(np.unique(t)))
+					print(f_seldate_out)
+					print("The file will be deleted. It is too dangerous to be left alive.")
+					print("----------------------------------------------------------------------")
+					# If the file is not corret, delete it! 
+					os.remove(f_seldate_out)
 
 
 # TODO: Pairing history with RCP files. 
@@ -315,6 +342,8 @@ def pair_history_to_rcp(var, rcp, ensemble='r1i1p1') :
 		time_span = '_Amon_'
 
 	history_dir = os.path.join(base_dir, 'r1i1p1_history_cut', "")
+
+	# This only works when history is available, everything builds on history files! 
 	history_models = get_var_unique_models(var, 'historical', history_dir)
 
 	rcp_dir = os.path.join(base_dir, 'r1i1p1_rcp_cut', "")
@@ -370,6 +399,8 @@ def pair_history_to_rcp(var, rcp, ensemble='r1i1p1') :
 			print('Not available: ' + rcp_file)
 			print('In ' + rcp_dir)
 			print('------------------------------------------------------------')
+			# TODO: Document where this happens! Then, once we know history is 
+			# TODO: complete, we can easily figure out where the RCP data is missing. 
 
 
 
