@@ -42,9 +42,9 @@
 
 # NOTE: HADGEM-ES has a very strange (late) history period. 
 
-makeHistory = False
-makeNew     = False
-makePairs   = False
+makeHistory = False # Runs all history file manipulations
+makeNew     = False # Runs all file initial trimming and merging
+makePairs   = False # Pairs available cut files to make single 1986-2100 file and common grid
 
 import sys
 import os
@@ -373,7 +373,7 @@ def pair_history_to_rcp(var, rcp, ensemble='r1i1p1') :
 		rcp_file_path     = os.path.join(rcp_dir, rcp_file)
 
 		print("Linking: " + history_file)
-		print("To: " + rcp_file)
+		print("To:      " + rcp_file)
 
 		# Make sure the corresponding rcp file exists before trying to merge
 		if os.path.exists(rcp_file_path) :
@@ -420,6 +420,7 @@ def pair_history_to_rcp(var, rcp, ensemble='r1i1p1') :
 			# TODO: complete, we can easily figure out where the RCP data is missing. 
 
 		print("----------------------------------------------end")
+		print(" ")
 
 
 #------------------------------------------------------------------------------
@@ -428,15 +429,15 @@ def pair_history_to_rcp(var, rcp, ensemble='r1i1p1') :
 # NOTE: All lines to be uncommented when running all variables
 if makeHistory :
 	print("Working on making history files.")
-	#make_var_files('sfcWind', 'historical', raw_data_dir); print("sfcWind complete")
+	make_var_files('sfcWind', 'historical', raw_data_dir); print("sfcWind complete")
 	make_var_files('tas', 'historical', raw_data_dir);     print("tas complete")
 	#make_var_files('mrso', 'historical', raw_data_dir);    print("mrso complete")
-	#make_var_files('mrlsl.integrated', 'historical', raw_data_dir); print("mrlsl.integrated complete")
+	make_var_files('mrlsl.integrated', 'historical', raw_data_dir); print("mrlsl.integrated complete")
 	#make_var_files('huss', 'historical', raw_data_dir);    print("huss complete")
-	#make_var_files('pr', 'historical', raw_data_dir);      print("pr complete")
-	#make_var_files('hurs', 'historical', raw_data_dir);    print("hurs complete")
-	#make_var_files('hfls', 'historical', raw_data_dir);    print("hfls complete")
-	#make_var_files('evspsbl', 'historical', raw_data_dir); print("evspsbl complete")
+	make_var_files('pr', 'historical', raw_data_dir);      print("pr complete")
+	make_var_files('hurs', 'historical', raw_data_dir);    print("hurs complete")
+	make_var_files('hfls', 'historical', raw_data_dir);    print("hfls complete")
+	make_var_files('evspsbl', 'historical', raw_data_dir); print("evspsbl complete")
 	print("----------------------------------")
 	print("Made history files without error")
 	print("----------------------------------")
@@ -445,26 +446,26 @@ if makeNew :
 	# Related to the newly downloaded data, when the project rebooted in concept
 	# near the beginning of Nov 2018
 	print("Make new RCP45")
-	#make_var_files('sfcWind', 'rcp45', raw_data_dir); print("sfcWind complete")
+	make_var_files('sfcWind', 'rcp45', raw_data_dir); print("sfcWind complete")
 	make_var_files('tas', 'rcp45', raw_data_dir);     print("tas complete")
 	#make_var_files('mrso', 'rcp45', raw_data_dir);    print("mrso complete")
-	#make_var_files('mrlsl.integrated', 'rcp45', raw_data_dir); print("mrlsl.integrated complete")
+	make_var_files('mrlsl.integrated', 'rcp45', raw_data_dir); print("mrlsl.integrated complete")
 	#make_var_files('huss', 'rcp45', raw_data_dir);    print("huss complete")
-	#make_var_files('pr', 'rcp45', raw_data_dir);      print("pr complete")
-	#make_var_files('hurs', 'rcp45', raw_data_dir);    print("hurs complete")
-	#make_var_files('hfls', 'rcp45', raw_data_dir);    print("hfls complete")
-	#make_var_files('evspsbl', 'rcp45', raw_data_dir); print("evspsbl complete")
+	make_var_files('pr', 'rcp45', raw_data_dir);      print("pr complete")
+	make_var_files('hurs', 'rcp45', raw_data_dir);    print("hurs complete")
+	make_var_files('hfls', 'rcp45', raw_data_dir);    print("hfls complete")
+	make_var_files('evspsbl', 'rcp45', raw_data_dir); print("evspsbl complete")
 
 	print("Make new RCP85")
-	#make_var_files('sfcWind', 'rcp85', raw_data_dir); print("sfcWind complete")
+	make_var_files('sfcWind', 'rcp85', raw_data_dir); print("sfcWind complete")
 	make_var_files('tas', 'rcp85', raw_data_dir);     print("tas complete")
 	#make_var_files('mrso', 'rcp85', raw_data_dir);    print("mrso complete")
-	#make_var_files('mrlsl.integrated', 'rcp85', raw_data_dir); print("mrlsl.integrated complete")
+	make_var_files('mrlsl.integrated', 'rcp85', raw_data_dir); print("mrlsl.integrated complete")
 	#make_var_files('huss', 'rcp85', raw_data_dir);    print("huss complete")
-	#make_var_files('pr', 'rcp85', raw_data_dir);      print("pr complete")
-	#make_var_files('hurs', 'rcp85', raw_data_dir);    print("hurs complete")
-	#make_var_files('hfls', 'rcp85', raw_data_dir);    print("hfls complete")
-	#make_var_files('evspsbl', 'rcp85', raw_data_dir); print("evspsbl complete")
+	make_var_files('pr', 'rcp85', raw_data_dir);      print("pr complete")
+	make_var_files('hurs', 'rcp85', raw_data_dir);    print("hurs complete")
+	make_var_files('hfls', 'rcp85', raw_data_dir);    print("hfls complete")
+	make_var_files('evspsbl', 'rcp85', raw_data_dir); print("evspsbl complete")
 
 	print("----------------------------------")
 	print("Made RCP files without error")
@@ -477,14 +478,14 @@ if makePairs :
 
 		print("Working on pairing history to " + r)
 		pair_history_to_rcp('tas', r);     print("completed tas")
-		#pair_history_to_rcp('sfcWind', r); print('completed sfcWind')
+		pair_history_to_rcp('sfcWind', r); print('completed sfcWind')
 		#pair_history_to_rcp('mrso', r);    print('completed mrso')
-		#pair_history_to_rcp('mrlsl.integrated', r);    print('completed mrlsl.integrated')
+		pair_history_to_rcp('mrlsl.integrated', r);    print('completed mrlsl.integrated')
 		#pair_history_to_rcp('huss', r);    print('completed huss')
-		#pair_history_to_rcp('pr', r);      print('completed pr')
-		#pair_history_to_rcp('hurs', r);    print('completed hurs')
-		#pair_history_to_rcp('hfls', r);    print('completed hfls')
-		#pair_history_to_rcp('evspsbl', r); print('completed evspsbl')
+		pair_history_to_rcp('pr', r);      print('completed pr')
+		pair_history_to_rcp('hurs', r);    print('completed hurs')
+		pair_history_to_rcp('hfls', r);    print('completed hfls')
+		pair_history_to_rcp('evspsbl', r); print('completed evspsbl')
 
 	print("----------------------------------")
 	print("Paired RCP to history without error")
