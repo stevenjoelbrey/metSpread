@@ -71,7 +71,7 @@ common_grid_file = os.path.join(base_dir, 'COMMON_GRID.txt')
 # Other variables for building file names 
 ensemble = 'r1i1p1'
 
-def get_var_unique_models(var, scenario, raw_data_dir) :
+def get_var_unique_models(var, scenario, search_data_dir) :
 	"""
 	Function for getting the unique model names that output a specified
 	CMIP5 variable for a given scenario. 
@@ -80,8 +80,8 @@ def get_var_unique_models(var, scenario, raw_data_dir) :
 	----------
 		var : str, the variable to list files for
 		scenario : str, the scenario to list for a given var
-		raw_data_dir : str, the directory where these queries will be
-		               made
+		search_data_dir : str, the directory where these queries will be
+		                  made
 
 	return
 	------
@@ -91,11 +91,11 @@ def get_var_unique_models(var, scenario, raw_data_dir) :
 	"""
 
 	# Get unique model names based on the available data for this variable
-	all_files = glob.glob(os.path.join(raw_data_dir, var + "_*"))
+	all_files = glob.glob(os.path.join(search_data_dir, var + "_*"))
 	# Make into single string
 	all_files_string = " ".join(all_files)
-	# remove annoyung raw_data_dir, and seperate files
-	all_var_files = all_files_string.replace(raw_data_dir, "").split()
+	# remove annoyung search_data_dir, and seperate files
+	all_var_files = all_files_string.replace(search_data_dir, "").split()
 
 	# Extract model name from file name 
 	var_model_name = []
@@ -301,7 +301,7 @@ def	make_var_files(var, scenario, raw_data_dir) :
 				nc = Dataset(f_seldate_out, 'r')
 				t = nc.variables['time'][:]
 				nc.close()
-				
+
 				if len(t) != 1140 :
 					print("----------------------------------------------------------------------")
 					print("ERROR- merged and cut date file does not have correct number of months")
@@ -334,7 +334,7 @@ def pair_history_to_rcp(var, rcp, ensemble='r1i1p1') :
 	"""
 
 		# e.g. variable_Amon_ModelName_scenario_ensembleMember_YYYYMM-YYYYMM.nc
-	if var == "mrso" or var == "mrlsl.integrated" : 
+	if (var == "mrso") or (var == "mrlsl.integrated") : 
 		# Land parameter
 		time_span = '_Lmon_'
 	else :
