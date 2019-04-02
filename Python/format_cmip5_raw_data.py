@@ -344,15 +344,16 @@ def pair_history_to_rcp(var, rcp, ensemble='r1i1p1') :
 	history_dir = os.path.join(base_dir, 'r1i1p1_history_cut', "")
 
 	# This only works when history is available, everything builds on history files! 
+	# get_var_unique_models(var, scenario, search_data_dir)
 	history_models = get_var_unique_models(var, 'historical', history_dir)
 
 	rcp_dir = os.path.join(base_dir, 'r1i1p1_rcp_cut', "")
 
 	for model in history_models :
 
-		# The dates of these files has been set and that was done by make_var_files()
-		history_file = var + time_span + model + '_historical_' + ensemble + "_198301-200512.nc"
-		rcp_file = var + time_span + model + '_' + rcp + '_' + ensemble + "_200601-210012.nc"
+		# The dates of these files has been set and that was done by make_var_files() method
+		history_file = var + time_span + model + "_historical_r1i1p1_198301-200512.nc"
+		rcp_file = var + time_span + model + '_' + rcp + "_r1i1p1_200601-210012.nc"
 
 		# Link file names to where they live on machine 
 		history_file_path = os.path.join(history_dir, history_file)
