@@ -289,7 +289,6 @@ def	make_var_files(var, scenario, raw_data_dir) :
 					print("ERROR- model file data do not have earlier enough start date")
 					print("WRONG DATES for " + s)
 					print("The min date in the file was " + minDate)
-					print("This file requires getting more historical data for this variable")
 					print("***************************************")
 					rcp_date_1 = minDate
 				else :
@@ -319,7 +318,8 @@ def	make_var_files(var, scenario, raw_data_dir) :
 					# If the file is not corret, delete it! 
 					os.remove(f_seldate_out)
 
-		print("----------------------------------------------end")		
+		print("----------------------------------------------end")
+		print(" ")		
 
 
 # TODO: Pairing history with RCP files. 
@@ -362,6 +362,8 @@ def pair_history_to_rcp(var, rcp, ensemble='r1i1p1') :
 
 	for model in history_models :
 
+		print("start--------------------------------------------")
+
 		# The dates of these files has been set and that was done by make_var_files() method
 		history_file = var + time_span + model + "_historical_r1i1p1_198301-200512.nc"
 		rcp_file = var + time_span + model + '_' + rcp + "_r1i1p1_200601-210012.nc"
@@ -392,13 +394,13 @@ def pair_history_to_rcp(var, rcp, ensemble='r1i1p1') :
 			# Remove and warn when the file is not the correct length. 
 			if len(t) != 1416 :
 
-				print("----------------------------------------------------------------------")
+				print("***************************************")
 				print("ERROR- merged and cut date file does not have correct number of months")
 				print(history_rcp_out)
 				print("The correct number of months should be 1416, got %i " % len(t) )
 				print("It has %i unique dates" %len(np.unique(t)))
 				print("The file will be deleted. It is too dangerous to be left alive.")
-				print("----------------------------------------------------------------------")
+				print("***************************************")
 				os.remove(history_rcp_out)
 
 			else :
@@ -409,14 +411,15 @@ def pair_history_to_rcp(var, rcp, ensemble='r1i1p1') :
 
 		else :
 
-			print('------------------------------------------------------------')
+			print('***************************************')
 			print("The history file " + history_file + ' had no ' + rcp + ' pair.')
 			print('Not available: ' + rcp_file)
 			print('In ' + rcp_dir)
-			print('------------------------------------------------------------')
+			print('***************************************')
 			# TODO: Document where this happens! Then, once we know history is 
 			# TODO: complete, we can easily figure out where the RCP data is missing. 
 
+		print("----------------------------------------------end")
 
 
 #------------------------------------------------------------------------------
@@ -426,7 +429,7 @@ def pair_history_to_rcp(var, rcp, ensemble='r1i1p1') :
 if makeHistory :
 	print("Working on making history files.")
 	#make_var_files('sfcWind', 'historical', raw_data_dir); print("sfcWind complete")
-	#make_var_files('tas', 'historical', raw_data_dir);     print("tas complete")
+	make_var_files('tas', 'historical', raw_data_dir);     print("tas complete")
 	#make_var_files('mrso', 'historical', raw_data_dir);    print("mrso complete")
 	#make_var_files('mrlsl.integrated', 'historical', raw_data_dir); print("mrlsl.integrated complete")
 	#make_var_files('huss', 'historical', raw_data_dir);    print("huss complete")
@@ -443,7 +446,7 @@ if makeNew :
 	# near the beginning of Nov 2018
 	print("Make new RCP45")
 	#make_var_files('sfcWind', 'rcp45', raw_data_dir); print("sfcWind complete")
-	#make_var_files('tas', 'rcp45', raw_data_dir);     print("tas complete")
+	make_var_files('tas', 'rcp45', raw_data_dir);     print("tas complete")
 	#make_var_files('mrso', 'rcp45', raw_data_dir);    print("mrso complete")
 	#make_var_files('mrlsl.integrated', 'rcp45', raw_data_dir); print("mrlsl.integrated complete")
 	#make_var_files('huss', 'rcp45', raw_data_dir);    print("huss complete")
@@ -454,7 +457,7 @@ if makeNew :
 
 	print("Make new RCP85")
 	#make_var_files('sfcWind', 'rcp85', raw_data_dir); print("sfcWind complete")
-	#make_var_files('tas', 'rcp85', raw_data_dir);     print("tas complete")
+	make_var_files('tas', 'rcp85', raw_data_dir);     print("tas complete")
 	#make_var_files('mrso', 'rcp85', raw_data_dir);    print("mrso complete")
 	#make_var_files('mrlsl.integrated', 'rcp85', raw_data_dir); print("mrlsl.integrated complete")
 	#make_var_files('huss', 'rcp85', raw_data_dir);    print("huss complete")
@@ -473,7 +476,7 @@ if makePairs :
 	for r in ['rcp85', 'rcp45'] :
 
 		print("Working on pairing history to " + r)
-		#pair_history_to_rcp('tas', r);     print("completed tas")
+		pair_history_to_rcp('tas', r);     print("completed tas")
 		#pair_history_to_rcp('sfcWind', r); print('completed sfcWind')
 		#pair_history_to_rcp('mrso', r);    print('completed mrso')
 		#pair_history_to_rcp('mrlsl.integrated', r);    print('completed mrlsl.integrated')
