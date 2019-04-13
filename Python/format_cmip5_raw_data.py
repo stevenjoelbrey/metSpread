@@ -8,6 +8,8 @@
 #
 # "variable_Amon_ModelName_scenario_ensembleMember_YYYYMM-YYYYMM.nc"
 # 
+# TODO: Deleted the files that are not needed when this script is complete. 
+# TOOD: On Wed April 3 2019 I deleted many of the not needed files to save space on machine
 # 
 # Goals/tasks of this script, in order
 # 1) mergetime : for like files (many models store data in lots of small files) 
@@ -143,7 +145,7 @@ def	make_var_files(var, scenario, raw_data_dir) :
 
 		# e.g. variable_Amon_ModelName_scenario_ensembleMember_YYYYMM-YYYYMM.nc
 		# TODO: Handle name of top soil variable here. 
-		if var == "mrso" or var == "mrlsl.integrated" : 
+		if var == "mrso" or var == "mrlsl.integrated" or var == "lai" : 
 			# Land parameter
 			time_span = '_Lmon_'
 		else :
@@ -345,7 +347,7 @@ def pair_history_to_rcp(var, rcp, ensemble='r1i1p1') :
 	"""
 
 		# e.g. variable_Amon_ModelName_scenario_ensembleMember_YYYYMM-YYYYMM.nc
-	if (var == "mrso") or (var == "mrlsl.integrated") : 
+	if (var == "mrso") or (var == "mrlsl.integrated") or (var == "lai") : 
 		# Land parameter
 		time_span = '_Lmon_'
 	else :
@@ -406,8 +408,15 @@ def pair_history_to_rcp(var, rcp, ensemble='r1i1p1') :
 			else :
 
 				# Regrid this merged file to the common grid 
+				# TODO: Use distance weighted remapping for land variables!!!!!
+				# cdo.remapdis
 				f_out_common_grid = os.path.join(base_dir, 'r1i1p1_rcp_COMMON_GRID', merged_name)
-				cdo.remapbil(common_grid_file, input=history_rcp_out, output=f_out_common_grid, options="-b F64")
+				if (var == "mrso") or (var == "mrlsl.integrated") or (var == "lai") : 
+					# mapping better for harsh edges in grid to missing values
+					print("------remapping %s with remapdis------" %var)
+					cdo.remapdis(common_grid_file, input=history_rcp_out, output=f_out_common_grid, options="-b F64")
+				else : 
+					cdo.remapbil(common_grid_file, input=history_rcp_out, output=f_out_common_grid, options="-b F64")
 
 		else :
 
@@ -433,7 +442,9 @@ if makeHistory :
 	make_var_files('tas', 'historical', raw_data_dir);     print("tas complete")
 	#make_var_files('mrso', 'historical', raw_data_dir);    print("mrso complete")
 	make_var_files('mrlsl.integrated', 'historical', raw_data_dir); print("mrlsl.integrated complete")
+	make_var_files('lai', 'historical', raw_data_dir);      print("lai complete")
 	#make_var_files('huss', 'historical', raw_data_dir);    print("huss complete")
+	
 	make_var_files('pr', 'historical', raw_data_dir);      print("pr complete")
 	make_var_files('hurs', 'historical', raw_data_dir);    print("hurs complete")
 	make_var_files('hfls', 'historical', raw_data_dir);    print("hfls complete")
@@ -450,6 +461,7 @@ if makeNew :
 	make_var_files('tas', 'rcp45', raw_data_dir);     print("tas complete")
 	#make_var_files('mrso', 'rcp45', raw_data_dir);    print("mrso complete")
 	make_var_files('mrlsl.integrated', 'rcp45', raw_data_dir); print("mrlsl.integrated complete")
+	make_var_files('lai', 'rcp45', raw_data_dir);      print("lai complete")
 	#make_var_files('huss', 'rcp45', raw_data_dir);    print("huss complete")
 	make_var_files('pr', 'rcp45', raw_data_dir);      print("pr complete")
 	make_var_files('hurs', 'rcp45', raw_data_dir);    print("hurs complete")
@@ -461,6 +473,7 @@ if makeNew :
 	make_var_files('tas', 'rcp85', raw_data_dir);     print("tas complete")
 	#make_var_files('mrso', 'rcp85', raw_data_dir);    print("mrso complete")
 	make_var_files('mrlsl.integrated', 'rcp85', raw_data_dir); print("mrlsl.integrated complete")
+	make_var_files('lai', 'rcp85', raw_data_dir);      print("lai complete")
 	#make_var_files('huss', 'rcp85', raw_data_dir);    print("huss complete")
 	make_var_files('pr', 'rcp85', raw_data_dir);      print("pr complete")
 	make_var_files('hurs', 'rcp85', raw_data_dir);    print("hurs complete")
@@ -481,6 +494,7 @@ if makePairs :
 		pair_history_to_rcp('sfcWind', r); print('completed sfcWind')
 		#pair_history_to_rcp('mrso', r);    print('completed mrso')
 		pair_history_to_rcp('mrlsl.integrated', r);    print('completed mrlsl.integrated')
+		pair_history_to_rcp('lai', r);    print('lai completed')
 		#pair_history_to_rcp('huss', r);    print('completed huss')
 		pair_history_to_rcp('pr', r);      print('completed pr')
 		pair_history_to_rcp('hurs', r);    print('completed hurs')
