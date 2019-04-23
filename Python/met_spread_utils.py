@@ -19,6 +19,7 @@ def get_all_model_names(dataDir="../Data/CMIP5/r1i1p1_rcp_COMMON_GRID") :
         all_model_names.append(f.split("/")[4].split("_")[2])
     return np.unique(all_model_names)
 
+# Get CMIP5 estimates for the same time period to make comparisons
 def get_cmip5_nc(var, rcp, model, spatial_mask, spatial_mean=False, inspect=False):
     """
     This function will be for loading a particular CMIP5 NetCDF file, which will be spatially subset 
@@ -46,9 +47,7 @@ def get_cmip5_nc(var, rcp, model, spatial_mask, spatial_mean=False, inspect=Fals
     
     """
         
-    if var == 'mrso' :
-        domain = 'Lmon'
-    elif var == 'mrlsl.integrated' :
+    if (var == 'mrso') or () or (var =='mrlsl.integrated') or (var == "lai"):
         domain = 'Lmon'
     else :
         domain = 'Amon'
@@ -80,7 +79,7 @@ def get_cmip5_nc(var, rcp, model, spatial_mask, spatial_mean=False, inspect=Fals
     # TODO: handle required changes to this section for when historical CMIP5 data
     # TODO: are also used. 
     t = nc.variables["time"]
-    if(len(t) == 1416):
+    if(len(t) == 1416) :
         # Convert to pandas time array, on the assumption t[0]=2006-01 & t[-1]=2100-12
         t_mon = pd.date_range("1983-01-01", periods=len(t), freq="M")
     else:
@@ -94,8 +93,33 @@ def get_cmip5_nc(var, rcp, model, spatial_mask, spatial_mean=False, inspect=Fals
     # same is done to the era-interim data using the method:
     # get_era_nc_vals()
     if spatial_mean :
-        spatial_mean_values = np.ma.mean(vals_masked, axis=(1,2))
-        vals_masked = spatial_mean_values
+        
+        # There is some extra stuff in here to make sure that
+        # values of np.nan for soil moisture also get masked. 
+        # i.e., in short, this masked all np.nan values too 
+        # when time means of the division masked values are taken. 
+        
+        spatial_mask_3d = vals_masked.mask
+        nan_mask = np.isnan(vals_masked.data)
+        combined_mask = spatial_mask | nan_mask
+        vals_masked_new = np.ma.array(vals_masked, mask=combined_mask)
+        
+        spatial_mean_values = np.ma.mean(vals_masked_new, axis=(1,2))
+        vals_masked = spatial_mean_values.data # if you do not do this, forces dtype object in dataframe. 
+                    
+        if False :
+            
+            print("Spatial Mask types")
+            print(type(spatial_mask_3d))
+            print(spatial_mask_3d.shape)
+            print("nan_mask")
+            print(type(nan_mask))
+            print(nan_mask.shape)
+            print("combined_mask")
+            print(type(combined_mask))
+            print(combined_mask.shape)
+            print("vals_masked_new")
+            print(vals_masked_new.shape)
         
     nc.close()
     
@@ -103,14 +127,10 @@ def get_cmip5_nc(var, rcp, model, spatial_mask, spatial_mean=False, inspect=Fals
 
 def get_era_nc_variable(var, spatial_mask, spatialMean=False, startYear=1983):
     """
-    # TODO: Move to utils
     This function will be for loading a particular nc file, which will be spatially subset.
     The data loaded are from the merged_t_COMMON_GRID directory. These data have been
     regridded from thier native resolution using cdo remapbil. 
-    
-    TODO: Add "endyear" as an argument in addition to "startyear" as new MTBS fire data is 
-    TODO: going to require going further back in time to train the model. 
-    
+        
     Parameters
     ----------
         var : str, The variable (and file name) of the ECMWF era-interim data to be 
@@ -209,84 +229,6 @@ def J_flux_to_W_flux(slhf) :
     hfls_watts = slhf / seconds_per_day  * -1 # temp factor of dividing by 2. 
     
     return hfls_watts
-
-
-def get_cmip5_nc(var="tas", rcp="45", model="ACCESS1-0", minX=0., maxX=360., minY=-90., maxY=90., spatial_mean=True):
-    """
-    This function will be for loading a particular CMIP5 NetCDF file, which will be spatially subset 
-    by this function. These CMIP5 model output to be loaded have been regridded to the "Common grid" 
-    using $ cdo remapbil. Defualts to taking the spatial mean of all global data for the var argument. 
-    Change area loaded using the minX, maxX, etc. arguments. 
-
-    # TODO: Needs to be modified to handle historical data when it becomes available. 
-    
-    Parameters
-    ----------
-	    var : str, The CMIP5 variable name to be loaded. File names match variable names. 
-	    rcp : str, "45" or "85", refers to representative concentration pathway. 
-	    model : The name of the model that created the var
-	    minX : float, min longitude (0-360) of the data to return. 
-	    maxX : float, max longitude (0-360) of the data to return. 
-	    minY : float, min latitude of the data to return. 
-	    maxY : float, max latitude of the data to return. 
-	    spatial_mean : Boolean, if True (default) a spatial mean of the era-interim data
-	                   is not taken and the data are returned on a t,lon,lat grid. 
-    
-    Return
-    ------
-		valsCut : array[month, lat, lon] for the chosen spatial extent or 
-		          array[month] spatial mean for the chosen spatial extent. 
-		t_mon : array of months as pd.date_range object. 
-		lonCut : array of longitude values that were used aftering trimming the global data
-		latCut : array of latitude values that were used after trimming the global data
-    
-    """
-        
-    # Create link to the monthly file in this projects directory structure. 
-    dataDir = os.path.join(".." ,"Data" ,"CMIP5" ,'r1i1p1_rcp45_rcp85_merged_t_COMMON_GRID')
-    f = var + "_" + "Amon_" + model + "_rcp" + rcp + "_r1i1p1_200601-210012.nc"
-    loadFile = os.path.join(dataDir, f)
-    
-    # Check to see if the file exists! Data logs indicate that not all requests exist
-    if(not os.path.isfile(loadFile)):
-        raise ValueError(f+ " File does not exist")
-    
-    # Load the nc data
-    nc = Dataset(loadFile)
-    vals = nc.variables[var][:]
-    lon = nc.variables["lon"][:]
-    lat = nc.variables["lat"][:]
-    
-    # Pandas handling of time so all models have the exact same origin and such. 
-    # TODO: handle required changes to this section for when historical CMIP5 data
-    # TODO: are also used. 
-    t = nc.variables["time"]
-    if(len(t) == 1140):
-        # Convert to pandas time array, on the assumption t[0]=2006-01 & t[-1]=2100-12
-        t_mon = pd.date_range("2006-01-01", periods=len(t), freq="M")
-    else:
-        raise ValueError('Error in number of months for file: '+ f + " 1140 expected.")
-        
-    # Now subset the data based on the passed max and min values for lon and lat
-    lonIndex = np.where( ((lon >= minX) & (lon <= maxX)) )[0]
-    latIndex = np.where( ( (lat >= minY) & (lat <= maxY) ) )[0]
-    timeIndex = range(len(t)) # because we want all months, for now
-
-    # Subset the 2D field
-    lonCut = lon[lonIndex]
-    latCut = lat[latIndex]
-
-    # Subset the 3D field
-    valsCut = vals[np.ix_(timeIndex, latIndex, lonIndex)]
-    
-    # Now, take the mean value in this spatial domain. Note, the 
-    # same is done to the era-interim data using the method:
-    # get_era_nc_vals()
-    if spatial_mean :
-        spatial_mean_values = np.mean(valsCut, axis=(1,2))
-        valsCut = spatial_mean_values
-    
-    return valsCut, t_mon, lonCut, latCut
 
 
 def get_era_nc_vals(var="t2m", minX=0., maxX=360., minY=-90., maxY=90., spatialMean=False, startYear=1992):
