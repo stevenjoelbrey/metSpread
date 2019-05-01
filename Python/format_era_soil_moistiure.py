@@ -4,7 +4,7 @@
 # Description
 #------------------------------------------------------------------------------
 # The purpose of this script is to combine era-interim soil layers 1-4 
-# into a variable the describes the total mass of water per square meter of soil. 
+# into a variable that describes the total mass of water per square meter of soil. 
 # The yearly soil files were downloaded with get_ecmwf.py. They are labeled 
 # soil_YYYY.nc. They contain four soil layers, swvl1, swvl2, swvl3, swvl4. We 
 # want to combine these layers because CMIP5 tracks soil moisture in all layers (mrso).
