@@ -6,6 +6,34 @@ import os
 import pandas as pd # TODO: Lots of training
 import glob as glob
 
+def make_nice_names(bad_names) : 
+    """
+    Some ugly code to clean up the feature names in this work. This function 
+    takes an array or list of ugly cmip5 style variable names and spits out
+    the names. E.g., "mrlsl.integrated" to "soil moisture". 
+    """
+    
+    # List to store the new nice names 
+    nice_names = []
+    # loop through bad names
+    for n in bad_names :
+        
+        var = n.replace("dust_season", "dust-season")
+        var = var.split("_")[0]
+        
+        # Handle dust season right away
+        var_nice = var.replace('mrlsl.integrated', 'Soil Moisture').replace("evspsbl", "Evaporation").replace("hurs", "RH%").replace("hfls", "Latent Heat")
+        var_nice = var_nice.replace("tas", "Temperature").replace("pr", "Precip").replace("sfcWind", "Wind Speed").replace("lai","LAI")
+                
+        if n.find("dust_season") != -1 :
+            # "dust_season" detected 
+            season = "dust season"
+        else :
+            season = n.split("_")[1]
+        
+        nice_names.append(var_nice + " (" + season+")")
+    
+    return nice_names 
 
 def get_all_model_names(dataDir="../Data/CMIP5/r1i1p1_rcp_COMMON_GRID") :
     """
